@@ -1,3 +1,6 @@
+# bot tokens, database passwords, etc.
+secrets.js
+
 # Logs
 logs
 *.log
