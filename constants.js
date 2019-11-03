@@ -1,11 +1,18 @@
-// permission integers
-const P_ALL             = 2147483647;
-const P_TMHI_MEMBER     = 1 << 0;
-const P_TMHI_ADMIN      = 1 << 1;
-const P_WIKI_ACCESS     = 1 << 2;
-
 // shorter alias for module.exports
 const e = module.exports;
+
+// shorter alias for e.permissions
+const p = e.permissions = {}; // eslint-disable-line no-multi-assign
+
+/*
+ * User permissions
+ * - Permissions can be added at any time
+ * - Changes to these values MUST be accompanied by a database update or everything will break!
+ */
+p.ALL             = 2147483647;
+p.TMHI_MEMBER     = 1 << 0;
+p.TMHI_ADMIN      = 1 << 1;
+p.WIKI_ACCESS     = 1 << 2;
 
 // TMHI Discord Bot version (note that this is NOT the constants.js version)
 e.version = "1.0.0";
@@ -23,30 +30,16 @@ e.config = {
 };
 
 /*
- * User permissions
- * - Permissions can be added at any time
- * - Changes to these values MUST be accompanied by a database update or everything will break!
- */
-e.permissions = {
-
-    ALL:            P_ALL,
-    TMHI_MEMBER:    P_TMHI_MEMBER,
-    TMHI_ADMIN:     P_TMHI_ADMIN,
-    WIKI_ACCESS:    P_WIKI_ACCESS,
-
-};
-
-/*
  * User roles
  * - Maps role names to their Discord id, and the permissions for that role
  */
 e.roles = {
 
-    CEO:                { id: "624005296674570241", permissions: [P_TMHI_MEMBER, P_TMHI_ADMIN, P_WIKI_ACCESS] },
-    FLEET_COMMANDER:    { id: "629067265576534036", permissions: [P_TMHI_MEMBER, P_WIKI_ACCESS] },
-    OFFICER:            { id: "628393968144482314", permissions: [P_TMHI_MEMBER, P_WIKI_ACCESS] },
-    MEMBER:             { id: "622969538916515864", permissions: [P_TMHI_MEMBER, P_WIKI_ACCESS] },
-    INITIATE:           { id: "623302616486772742", permissions: [P_TMHI_MEMBER] },
+    CEO:                { id: "624005296674570241", permissions: [p.TMHI_MEMBER, p.TMHI_ADMIN, p.WIKI_ACCESS] },
+    FLEET_COMMANDER:    { id: "629067265576534036", permissions: [p.TMHI_MEMBER, p.WIKI_ACCESS] },
+    OFFICER:            { id: "628393968144482314", permissions: [p.TMHI_MEMBER, p.WIKI_ACCESS] },
+    MEMBER:             { id: "622969538916515864", permissions: [p.TMHI_MEMBER, p.WIKI_ACCESS] },
+    INITIATE:           { id: "623302616486772742", permissions: [p.TMHI_MEMBER] },
 
     INDUSTRIAL:         { id: "627811415226580993", permissions: [] },
     BLACK_OPS:          { id: "627811756491931669", permissions: [] },
