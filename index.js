@@ -1,8 +1,13 @@
 #!/usr/bin/env nodejs
 
+// crash Node on unhandled promise rejections
+process.on("unhandledRejection", up => {
+    throw up;
+});
+
 // imports
 const Discord        = require("discord.js");
-const mysql          = require("mysql2");
+const mysql          = require("mysql2/promise");
 
 const secrets        = require("./secrets.js");
 const constants      = require("./constants.js");
@@ -31,22 +36,17 @@ client.on("ready", async () => {
     commandManager.initialize(client, dbPool);
 
     // load TMHI guild
-    const guild = client.guilds.get(constants.guild);
+    const guild = client.guilds.get(constants.config.guild);
 
     // force update for all users
-    guild.members.values.forEach((member) => {
+    guild.members.forEach((member, id /* unused */) => {
         // skip bot users
         if (member.user.bot) {
             return;
         }
 
         // grant permissions based off roles
-        const permissionsList = [];
-        constants.roles.values.forEach(role => {
-            if (member.roles.has(role.id)) {
-                permissionsList.push(...role.permissions);
-            }
-        });
+        const permissionsList = helper.rolesToPermissions(member.roles);
         const permissions = helper.permissionsToInt(permissionsList);
 
         // check that the user is added to the database and apply permissions
@@ -64,7 +64,7 @@ client.on("ready", async () => {
      * Someone left the server, strip their permissions.
      */
     client.on("guildMemberRemove", async member => {
-        // create the connection to database
+        // revoke all permissions
         userManager.revokePermissions(member.id, constants.permissions.ALL);
     });
 
@@ -73,17 +73,12 @@ client.on("ready", async () => {
      */
     client.on("guildMemberUpdate", async (_, member) => {
         // grant permissions based off roles
-        const permissionsList = [];
-        constants.roles.values.forEach(role => {
-            if (member.roles.has(role.id)) {
-                permissionsList.push(...role.permissions);
-            }
-        });
-
-        // apply permissions
+        const permissionsList = helper.rolesToPermissions(member.roles);
         const permissions = helper.permissionsToInt(permissionsList);
         userManager.grantPermissions(member.id, permissions);
     });
+
+    console.log("Finished initialization");
 });
 
 client.login(secrets.bot_token);
