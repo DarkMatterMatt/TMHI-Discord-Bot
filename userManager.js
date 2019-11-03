@@ -12,7 +12,7 @@ let dbPool = null;
  *
  * @param  pool  A connection pool to the TMHI database.
  */
-e.initialize = (dbPool_) => {
+e.initialize = async (dbPool_) => {
     dbPool = dbPool_;
 };
 
@@ -23,10 +23,10 @@ e.initialize = (dbPool_) => {
  * @param  displayName      The user's display name.
  * @param  permissionsList  An optional permission or list of permissions to grant.
  */
-e.addUserToDatabase = (id, displayName, permissionsList) => {
+e.addUserToDatabase = async (id, displayName, permissionsList) => {
     const permissions = helper.permissionsToInt(permissionsList);
 
-    dbPool.query(`
+    return dbPool.query(`
         INSERT INTO users (discordid, displayname, permissions)
         VALUES (?, ?, ?)
         ON DUPLICATE KEY
@@ -40,10 +40,10 @@ e.addUserToDatabase = (id, displayName, permissionsList) => {
  * @param  id               The user's Discord snowflake id.
  * @param  permissionsList  A permission or list of permissions to revoke.
  */
-e.grantPermissions = (id, permissionsList) => {
+e.grantPermissions = async (id, permissionsList) => {
     const permissions = helper.permissionsToInt(permissionsList);
 
-    dbPool.query(`
+    return dbPool.query(`
         UPDATE users
         SET permissions = permissions | ?
         WHERE discordid = ?
@@ -61,10 +61,10 @@ e.grantPermission = e.grantPermissions;
  * @param  id               The user's Discord snowflake id.
  * @param  permissionsList  A permission or list of permissions to revoke.
  */
-e.revokePermissions = (id, permissionsList) => {
+e.revokePermissions = async (id, permissionsList) => {
     const permissions = helper.permissionsToInt(permissionsList);
 
-    dbPool.query(`
+    return dbPool.query(`
         UPDATE users
         SET permissions = permissions & ~?
         WHERE discordid = ?
