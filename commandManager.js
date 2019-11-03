@@ -1,5 +1,5 @@
 // imports
-const constants = require("./constants.js");
+const constants   = require("./constants.js");
 
 // shorter alias for module.exports
 const e = module.exports;
@@ -14,23 +14,23 @@ let dbPool = null;
  * @param  client  A reference to the Discord.js client.
  * @param  pool    A connection pool to the TMHI database.
  */
-e.initialize = (client_, dbPool_) => {
+e.initialize = async (client_, dbPool_) => {
     client = client_;
     dbPool = dbPool_;
 
-    client.on("message", message => {
+    client.on("message", async (message) => {
         // ignore messages from bots
         if (message.author.bot) {
             return;
         }
 
         // ignore messages without the prefix
-        if (!message.content.startsWith(constants.prefix)) {
+        if (!message.content.startsWith(constants.config.prefix)) {
             return;
         }
 
         // remove prefix, normalize to lowercase
-        const text = message.content.slice(constants.prefix.length).toLowerCase();
+        const text = message.content.slice(constants.config.prefix.length).toLowerCase();
 
         // split into command and an array of arguments
         const [command, ...args] = text.trim().split(/\s+/);
@@ -42,6 +42,13 @@ e.initialize = (client_, dbPool_) => {
              */
             case "version": {
                 message.reply(`TMHI Discord Bot v${constants.version}`);
+                break;
+            }
+
+            /*
+             * Who knows what this command might do?
+             */
+            case "test": {
                 break;
             }
 
