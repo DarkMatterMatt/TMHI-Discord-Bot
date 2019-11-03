@@ -30,13 +30,10 @@ module.exports = {
         }],
         "no-bitwise": "off",
         "no-console": "off",
-        "no-multi-spaces": ["error", {
-            "exceptions": {
-                "Property": true,
-                "VariableDeclarator": true,
-            },
+        "no-multi-spaces": "off",
+        "no-unused-vars": ["warn", {
+            "args": "none",
         }],
-        "no-unused-vars": ["warn"],
         "no-restricted-syntax": "off",
     },
 };
