@@ -24,16 +24,23 @@ e.initialize = async (client_, dbPool_) => {
             return;
         }
 
-        // ignore messages without the prefix
-        if (!message.content.startsWith(constants.config.prefix)) {
+        // get text content
+        let messageContent;
+        if (message.content.startsWith(constants.config.prefix)) {
+            // remove prefix
+            messageContent = message.content.slice(constants.config.prefix.length);
+        }
+        else if (message.content.startsWith(`<@${client.user.id}>`)) {
+            // remove prefix
+            messageContent = message.content.slice(`<@${client.user.id}>`.length);
+        }
+        // ignore messages that don't start with the specified prefix or @TMHI-Bot
+        else {
             return;
         }
 
-        // remove prefix, normalize to lowercase
-        const text = message.content.slice(constants.config.prefix.length).toLowerCase();
-
         // split into command and an array of arguments
-        const [command, ...args] = text.trim().split(/\s+/);
+        const [command, ...args] = messageContent.toLowerCase().trim().split(/\s+/);
 
         // process command
         switch (command) {
