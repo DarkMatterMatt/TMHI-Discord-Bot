@@ -9,8 +9,9 @@ const userManager = require("./userManager.js");
 // shorter alias for module.exports
 const e = module.exports;
 
-// shared discord client & database connection pool
+// shared discord client, TMHI guild & database connection pool
 let client = null;
+let guild  = null;
 let dbPool = null;
 
 /*
@@ -19,9 +20,10 @@ let dbPool = null;
  * @param  client  A reference to the Discord.js client.
  * @param  pool    A connection pool to the TMHI database.
  */
-e.initialize = async (client_, dbPool_) => {
-    client = client_;
-    dbPool = dbPool_;
+e.initialize = async (_guild, _dbPool) => {
+    client = _guild.client;
+    guild  = _guild;
+    dbPool = _dbPool;
 
     client.on("message", async (message) => {
         // ignore messages from bots
@@ -71,21 +73,32 @@ e.initialize = async (client_, dbPool_) => {
              */
             case "permissions":
             case "getpermissions": {
-                const authorPermissions = await userManager.getPermissions(message.author.id);
+                const author = await userManager.loadUser(message.member);
 
                 // fetching own permissions
                 if (args.length === 0) {
-                    message.reply(`Your permissions integer is ${authorPermissions}`);
+                    if (author.tmhiPermissions.size === 0) {
+                        message.reply("You have no permissions :cry:");
+                        break;
+                    }
+                    const permissionsString = author.tmhiPermissions.map(p => p.name).join(", ");
+                    message.reply(`Your permissions are ${permissionsString}`);
                     break;
                 }
                 // fetching someone else's permissions
                 if (args.length === 1) {
                     // must have admin permissions to view another user's permissions
-                    if (authorPermissions & constants.permissions.TMHI_ADMIN) {
-                        const userToFetch = args[0].replace(/\D+/g, "");
-                        const userPermissions = await userManager.getPermissions(userToFetch);
+                    if (1 || author.tmhiPermissions.has("TMHI_ADMIN")) {
+                        const memberIdToFetch = args[0].replace(/\D+/g, "");
+                        const member = await userManager.loadUser(await message.guild.fetchMember(memberIdToFetch));
 
-                        message.reply(`Their permissions integer is ${userPermissions}`);
+                        if (member.tmhiPermissions.size === 0) {
+                            message.reply(`${member.displayName} has no permissions`);
+                            break;
+                        }
+
+                        const permissionsString = member.tmhiPermissions.map(p => p.name).join(", ");
+                        message.reply(`${member.displayName}'s permissions are ${permissionsString}`);
                         break;
                     }
                     // not admin
