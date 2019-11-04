@@ -78,6 +78,7 @@ e.initialize = async (client_, dbPool_) => {
                     message.reply(`Your permissions integer is ${authorPermissions}`);
                     break;
                 }
+                // fetching someone else's permissions
                 if (args.length === 1) {
                     // must have admin permissions to view another user's permissions
                     if (authorPermissions & constants.permissions.TMHI_ADMIN) {
