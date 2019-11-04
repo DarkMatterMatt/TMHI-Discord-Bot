@@ -54,14 +54,15 @@ client.on("ready", async () => {
     });
 
     /*
-     * New user has joined the server, add them to the database.
+     * New user has joined the server.
      */
     client.on("guildMemberAdd", async member => {
+        // add the user to the database
         userManager.addUserToDatabase(member.id, member.displayName, constants.permissions.TMHI_MEMBER);
     });
 
     /*
-     * Someone left the server, strip their permissions.
+     * Someone left the server.
      */
     client.on("guildMemberRemove", async member => {
         // revoke all permissions
@@ -69,10 +70,11 @@ client.on("ready", async () => {
     });
 
     /*
-     * New user has joined the server, add them to the database.
+     * The user has changed.
      */
     client.on("guildMemberUpdate", async (_, member) => {
-        // grant permissions based off roles
+        // grant permissions based off roles.
+        // note that removing a role does not remove the permission!
         const permissionsList = helper.rolesToPermissions(member.roles);
         const permissions = helper.permissionsToInt(permissionsList);
         userManager.grantPermissions(member.id, permissions);
