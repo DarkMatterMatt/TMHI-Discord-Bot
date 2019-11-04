@@ -1,12 +1,14 @@
 // imports
 const Collection = require("discord.js/src/util/Collection");
 const helper = require("./helper.js");
-const User = require("./User.js");
+const TmhiMember = require("./TmhiMember.js");
 
 // shorter alias for module.exports
 const e = module.exports;
 
-// shared database connection pool
+// shared discord client, TMHI guild & database connection pool
+let client = null;
+let guild  = null;
 let dbPool = null;
 
 /*
@@ -14,8 +16,10 @@ let dbPool = null;
  *
  * @param  pool  A connection pool to the TMHI database.
  */
-e.initialize = (dbPool_) => {
-    dbPool = dbPool_;
+e.initialize = (_guild, _dbPool) => {
+    client = _guild.client;
+    guild  = _guild;
+    dbPool = _dbPool;
 };
 
 /*
@@ -25,15 +29,13 @@ e.initialize = (dbPool_) => {
  * @param  displayName      The user's display name.
  * @param  permissionsList  An optional permission or list of permissions to grant.
  */
-e.addUserToDatabase = async (id, displayName, permissionsList) => {
-    const permissions = helper.permissionsToInt(permissionsList);
-
+e.addUserToDatabase = async (id, displayName) => {
     return dbPool.query(`
-        INSERT INTO users (discordid, displayname, permissions)
-        VALUES (?, ?, ?)
+        INSERT INTO users (id, displayname)
+        VALUES (?, ?)
         ON DUPLICATE KEY
-        UPDATE displayName = ?, permissions = permissions | ?
-    ;`, [id, displayName, permissions, displayName, permissions]);
+        UPDATE displayName = ?
+    ;`, [id, displayName, displayName]);
 };
 
 /*
@@ -44,7 +46,7 @@ e.addUserToDatabase = async (id, displayName, permissionsList) => {
  */
 e.grantPermissions = async (id, permissionsList) => {
     const permissions = helper.permissionsToInt(permissionsList);
-
+    return;
     return dbPool.query(`
         UPDATE users
         SET permissions = permissions | ?
@@ -65,7 +67,7 @@ e.grantPermission = e.grantPermissions;
  */
 e.revokePermissions = async (id, permissionsList) => {
     const permissions = helper.permissionsToInt(permissionsList);
-
+    return;
     return dbPool.query(`
         UPDATE users
         SET permissions = permissions & ~?
@@ -79,71 +81,36 @@ e.revokePermissions = async (id, permissionsList) => {
 e.revokePermission = e.revokePermissions;
 
 /*
- * Retrieve a Discord user's permissions from the database.
+ * Retrieve a Discord user from the database.
  *
- * @param  id  The user's Discord snowflake id.
+ * @param    guildMember  The guild member to load from the database.
+ * @returns  A TmhiMember object.
  */
-e.getPermissions = async (id) => {
-    const [rows] = await dbPool.query(`
-        SELECT permissions
-        FROM users
-        WHERE discordid = ?
-    ;`, [id]);
-
-    if (rows.length === 0) {
-        return false;
-    }
-
-    return rows[0].permissions;
-};
-
-/*
- * Retrieve a Discord user's permissions from the database.
- *
- * @param    id  The user's Discord snowflake id.
- * @returns  A User object, or false if the user does not exist.
- */
-e.loadUser = async (id) => {
+e.loadUser = async (guildMember) => {
     let rows;
 
     // load user from database
     [rows] = await dbPool.query(`
-        SELECT displayname, timezone
+        SELECT timezone
         FROM users
-        WHERE discordid = ?
-    ;`, [id]);
+        WHERE id=?
+    ;`, [guildMember.id]);
 
     // no user found
     if (rows.length === 0) {
-        return false;
+        throw new Error(`Failed loading user with id: ${guildMember.id}`);
     }
-    const [name, timezone] = rows[0];
-
-    // load roles for user
-    [rows] = await dbPool.query(`
-        SELECT roles.id as id, roles.name as name, roles.description as description
-        FROM userroles
-        JOIN roles ON userroles.roleid=roles.id
-        WHERE userroles.userid = ?
-    ;`, [id]);
-
-    const roles = new Collection();
-    rows.forEach(row => {
-        roles.set(rows.id, {
-            name:        row.name,
-            description: row.description,
-        });
-    });
+    const { timezone } = rows[0];
 
     // load permissions for user
     [rows] = await dbPool.query(`
-        SELECT roles.id as id, roles.name as name, roles.description as description
-        FROM userroles
-        JOIN rolepermissions ON userroles.roleid=rolepermissions.id
-        JOIN permissions     ON rolepermissions.permissionid=permissions.id
-        WHERE userroles.userid = ?
-    ;`, [id]);
+        SELECT permissions.id as id, permissions.name as name, permissions.description as description
+        FROM rolepermissions
+        JOIN permissions ON rolepermissions.permissionid=permissions.id
+        WHERE rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
+    ;`, guildMember.roles.map(r => r.id));
 
+    // map permissions into a Collection
     const permissions = new Collection();
     rows.forEach(row => {
         permissions.set(rows.id, {
@@ -152,5 +119,5 @@ e.loadUser = async (id) => {
         });
     });
 
-    return new User(id, name, roles, timezone, permissions);
+    return new TmhiMember(guildMember, timezone, permissions);
 };

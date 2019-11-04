@@ -31,15 +31,15 @@ const client = new Discord.Client();
 client.on("ready", async () => {
     console.log(`Logged in as ${client.user.tag}!`);
 
-    // initialize user and command managers
-    userManager.initialize(dbPool);
-    commandManager.initialize(client, dbPool);
-
     // load TMHI guild
     const guild = client.guilds.get(constants.config.guild);
 
+    // initialize user and command managers
+    userManager.initialize(guild, dbPool);
+    commandManager.initialize(guild, dbPool);
+
     // force update for all users
-    guild.members.forEach((member, id /* unused */) => {
+    guild.members.forEach((member, id) => {
         // skip bot users
         if (member.user.bot) {
             return;
