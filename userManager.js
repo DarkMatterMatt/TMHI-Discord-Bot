@@ -75,3 +75,22 @@ e.revokePermissions = async (id, permissionsList) => {
  * Alias for revokePermissions.
  */
 e.revokePermission = e.revokePermissions;
+
+/*
+ * Retrieve a Discord user's permissions from the database.
+ *
+ * @param  id               The user's Discord snowflake id.
+ */
+e.getPermissions = async (id) => {
+    const [rows] = await dbPool.query(`
+        SELECT permissions
+        FROM users
+        WHERE discordid = ?
+    ;`, [id]);
+
+    if (rows.length === 0) {
+        return false;
+    }
+
+    return rows[0].permissions;
+};

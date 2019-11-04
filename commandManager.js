@@ -1,5 +1,10 @@
+/**
+ * The commandManager listens for, and acts on, user commands.
+ */
+
 // imports
 const constants   = require("./constants.js");
+const userManager = require("./userManager.js");
 
 // shorter alias for module.exports
 const e = module.exports;
@@ -56,6 +61,38 @@ e.initialize = async (client_, dbPool_) => {
              * Who knows what this command might do?
              */
             case "test": {
+                break;
+            }
+
+            /*
+             * Load the users permissions
+             *
+             * @param  [discordId]  Optional discordId to fetch. If omitted, fetches own permissions.
+             */
+            case "permissions":
+            case "getpermissions": {
+                const authorPermissions = await userManager.getPermissions(message.author.id);
+
+                // fetching own permissions
+                if (args.length === 0) {
+                    message.reply(`Your permissions integer is ${authorPermissions}`);
+                    break;
+                }
+                if (args.length === 1) {
+                    // must have admin permissions to view another user's permissions
+                    if (authorPermissions & constants.permissions.TMHI_ADMIN) {
+                        const userToFetch = args[0].replace(/\D+/g, "");
+                        const userPermissions = await userManager.getPermissions(userToFetch);
+
+                        message.reply(`Their permissions integer is ${userPermissions}`);
+                        break;
+                    }
+                    // not admin
+                    message.reply("You must be an admin to view another user's permissions");
+                }
+                // more than one argument
+                message.reply("Invalid syntax. "
+                    + `Syntax is: \`${constants.config.prefix}permissions [optional @someone]\``);
                 break;
             }
 
