@@ -12,7 +12,6 @@ CREATE TABLE users (
     discordrefreshtoken VARCHAR(255),
     
     UNIQUE KEY          id_index        (id),
-    UNIQUE KEY          wikiid_index    (wikiid),
     PRIMARY KEY         (id)
 );
 
@@ -23,7 +22,7 @@ CREATE TABLE roles (
     
     UNIQUE KEY      id_index        (id),
     PRIMARY KEY     (id)
-)
+);
 
 CREATE TABLE permissions (
     id              INT             NOT NULL        AUTO_INCREMENT,
@@ -32,7 +31,7 @@ CREATE TABLE permissions (
 
     UNIQUE KEY      id_index        (id),
     PRIMARY KEY     (id)
-)
+);
 
 /* Linking tables */
 
@@ -44,7 +43,7 @@ CREATE TABLE userroles (
 
     UNIQUE KEY      id_index        (id),
     PRIMARY KEY     (id)
-)
+);
 
 CREATE TABLE rolepermissions (
     id              INT             NOT NULL        AUTO_INCREMENT,
@@ -54,4 +53,4 @@ CREATE TABLE rolepermissions (
 
     UNIQUE KEY      id_index        (id)    USING BTREE,
     PRIMARY KEY     (id)
-)
+);
