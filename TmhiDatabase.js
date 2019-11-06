@@ -59,7 +59,7 @@ module.exports = class TmhiDatabase {
         // map permissions into a Collection
         const permissions = new Collection();
         rows.forEach(row => {
-            permissions.set(rows.id, {
+            permissions.set(row.id, {
                 name:        row.name,
                 description: row.description,
             });
