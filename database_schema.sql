@@ -25,7 +25,7 @@ CREATE TABLE roles (
 );
 
 CREATE TABLE permissions (
-    id              INT             NOT NULL        AUTO_INCREMENT,
+    id              VARCHAR(255)    NOT NULL        COMMENT 'Readable id, e.g. WIKI_ACCESS',
     name            VARCHAR(255)    NOT NULL        COMMENT 'Name to show users, e.g. "Wiki Access"',
     description     VARCHAR(8192)   DEFAULT '',
 
@@ -48,9 +48,9 @@ CREATE TABLE userroles (
 CREATE TABLE rolepermissions (
     id              INT             NOT NULL        AUTO_INCREMENT,
     roleid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
-    permissionid    INT             NOT NULL,
+    permissionid    VARCHAR(255)    NOT NULL,
     description     VARCHAR(8192)   DEFAULT '',
 
-    UNIQUE KEY      id_index        (id)    USING BTREE,
+    UNIQUE KEY      id_index        (id),
     PRIMARY KEY     (id)
 );

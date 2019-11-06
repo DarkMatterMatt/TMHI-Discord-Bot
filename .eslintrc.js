@@ -17,10 +17,16 @@ module.exports = {
     rules: {
         "arrow-parens": "off",
         "brace-style": ["error", "stroustrup"],
+        "comma-dangle": ["error", {
+            "arrays": "always-multiline",
+            "objects": "always-multiline",
+            "imports": "always-multiline",
+            "exports": "always-multiline",
+            "functions": "never",
+        }],
         "indent": ["error", 4, {
             "SwitchCase": 1
         }],
-        "quotes": ["error", "double"],
         "key-spacing": ["error", {
             "mode": "minimum",
             "align": "value",
@@ -36,5 +42,6 @@ module.exports = {
             "args": "none",
         }],
         "no-restricted-syntax": "off",
+        "quotes": ["error", "double"],
     },
 };
