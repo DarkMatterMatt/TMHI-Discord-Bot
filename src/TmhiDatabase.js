@@ -10,6 +10,7 @@ const TmhiMember = require("./TmhiMember.js");
 module.exports = class TmhiDatabase {
     constructor(createPoolOptions) {
         this.pool = mysql.createPool(createPoolOptions);
+        this.pool.config.connectionConfig.namedPlaceholders = true;
     }
 
     /*
@@ -20,10 +21,13 @@ module.exports = class TmhiDatabase {
     async addUserToDatabase(guildMember) {
         return this.pool.query(`
             INSERT INTO users (id, displayname)
-            VALUES (?, ?)
+            VALUES (:id, :displayname)
             ON DUPLICATE KEY
-            UPDATE displayName = ?
-        ;`, [guildMember.id, guildMember.displayName, guildMember.displayName]);
+            UPDATE displayName=:displayname
+        ;`, {
+            id:          guildMember.id,
+            displayname: guildMember.displayName,
+        });
     }
 
     /*
@@ -39,8 +43,8 @@ module.exports = class TmhiDatabase {
         [rows] = await this.pool.query(`
             SELECT timezone
             FROM users
-            WHERE id=?
-        ;`, [guildMember.id]);
+            WHERE id=:id
+        ;`, { id: guildMember.id });
 
         // no user found
         if (rows.length === 0) {
@@ -83,36 +87,48 @@ module.exports = class TmhiDatabase {
      * Add a TMHI Discord role for the member to the database.
      * This should only be called after a role has been added via the Discord server.
      */
-    addMemberRole(id, roleId, reason = "") {
+    addMemberRole(userId, roleId, comment = "") {
         return this.pool.query(`
-            INSERT INTO userroles (userid, roleid, reason)
-            VALUES (?, ?, ?)
+            INSERT INTO userroles (userid, roleid, comment)
+            VALUES (:userId, :roleId, :comment)
             ON DUPLICATE KEY
-            UPDATE id=id
-        `, [id, roleId, reason]);
+            UPDATE comment=:comment
+        `, {
+            userId,
+            roleId,
+            comment,
+        });
     }
 
     /**
      * Grants a permission to a TMHI Discord role in the database.
      */
-    grantRolePermission(roleId, permissionId, reason = "") {
+    grantRolePermission(roleId, permissionId, comment = "") {
         return this.pool.query(`
-            INSERT INTO rolepermissions (roleid, permissionid, description)
-            VALUES (?, ?, ?)
+            INSERT INTO rolepermissions (roleid, permissionid, comment)
+            VALUES (:roleId, :permissionId, :comment)
             ON DUPLICATE KEY
-            UPDATE id=id
-        `, [roleId, permissionId, reason]);
+            UPDATE comment=:comment
+        `, {
+            roleId,
+            permissionId,
+            comment,
+        });
     }
 
     /**
      * Creates a new permission type in the database.
      */
-    createPermissionType(permissionId, name, description) {
+    createPermissionType(permissionId, name, comment = "") {
         return this.pool.query(`
-            INSERT INTO permissions (id, name, description)
-            VALUES (?, ?, ?)
+            INSERT INTO permissions (id, name, comment)
+            VALUES (:id, :name, :comment)
             ON DUPLICATE KEY
-            UPDATE id=id
-        `, [permissionId, name, description]);
+            UPDATE name=:name, comment=:comment
+        `, {
+            id: permissionId,
+            name,
+            comment,
+        });
     }
 };
