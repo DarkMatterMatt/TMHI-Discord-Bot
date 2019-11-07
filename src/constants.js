@@ -1,6 +1,6 @@
 module.exports = {
     // TMHI Discord Bot version (note that this is NOT the constants.js version)
-    version: "2.0.0-dev",
+    version: "2.0.1",
 
     /*
     * Bot configuration options
