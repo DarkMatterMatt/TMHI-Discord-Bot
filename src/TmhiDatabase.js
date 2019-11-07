@@ -10,7 +10,7 @@ const TmhiMember = require("./TmhiMember.js");
 module.exports = class TmhiDatabase {
     constructor(createPoolOptions) {
         this.pool = mysql.createPool(createPoolOptions);
-        this.pool.config.connectionConfig.namedPlaceholders = true;
+        this.pool.pool.config.connectionConfig.namedPlaceholders = true;
     }
 
     /*
