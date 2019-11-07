@@ -41,6 +41,9 @@ CREATE TABLE userroles (
     roleid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
     description     VARCHAR(8192)   DEFAULT '',
 
+    CONSTRAINT      userrole_constraint         UNIQUE      (userid, roleid),
+    FOREIGN KEY     (userid)        REFERENCES  users(id),
+    FOREIGN KEY     (roleid)        REFERENCES  roles(id),
     UNIQUE KEY      id_index        (id),
     PRIMARY KEY     (id)
 );
@@ -51,6 +54,9 @@ CREATE TABLE rolepermissions (
     permissionid    VARCHAR(255)    NOT NULL,
     description     VARCHAR(8192)   DEFAULT '',
 
+    CONSTRAINT      rolepermission_constraint     UNIQUE      (roleid, permissionid),
+    FOREIGN KEY     (roleid)        REFERENCES    roles(id),
+    FOREIGN KEY     (permissionid)  REFERENCES    permissions(id),
     UNIQUE KEY      id_index        (id),
     PRIMARY KEY     (id)
 );

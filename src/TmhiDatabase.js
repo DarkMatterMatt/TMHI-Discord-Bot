@@ -87,6 +87,8 @@ module.exports = class TmhiDatabase {
         return this.pool.query(`
             INSERT INTO userroles (userid, roleid, reason)
             VALUES (?, ?, ?)
+            ON DUPLICATE KEY
+            UPDATE id=id
         `, [id, roleId, reason]);
     }
 
@@ -97,6 +99,8 @@ module.exports = class TmhiDatabase {
         return this.pool.query(`
             INSERT INTO rolepermissions (roleid, permissionid, description)
             VALUES (?, ?, ?)
+            ON DUPLICATE KEY
+            UPDATE id=id
         `, [roleId, permissionId, reason]);
     }
 
@@ -107,6 +111,8 @@ module.exports = class TmhiDatabase {
         return this.pool.query(`
             INSERT INTO permissions (id, name, description)
             VALUES (?, ?, ?)
+            ON DUPLICATE KEY
+            UPDATE id=id
         `, [permissionId, name, description]);
     }
 };
