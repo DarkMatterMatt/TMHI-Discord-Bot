@@ -146,6 +146,9 @@ module.exports = class CommandManager {
                         break;
                     }
 
+                    const roleId = args[0].replace(/\D/g);
+                    const [, permissionId, comment] = args;
+
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
 
                     if (!author.hasPermission("GRANT_ROLE_PERMISSIONS")) {
@@ -154,15 +157,20 @@ module.exports = class CommandManager {
                         break;
                     }
 
-                    const roleId = args[0].replace(/\D/g);
-
                     if (!message.guild.roles.has(roleId)) {
                         // role doesn't exist
                         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
                         break;
                     }
 
-                    const [rows] = await this.tmhiDatabase.grantRolePermission(roleId, args[1], args[2]);
+                    if (!await this.tmhiDatabase.permissionExists(permissionId)) {
+                        // permission doesn't exist
+                        message.reply("That permission doesn't exist. You need to create it using"
+                            + `\`${constants.config.prefix}createPermission\``);
+                        break;
+                    }
+
+                    const [rows] = await this.tmhiDatabase.grantRolePermission(roleId, permissionId, comment);
 
                     if (rows.affectedRows === 0) {
                         // database operation failed

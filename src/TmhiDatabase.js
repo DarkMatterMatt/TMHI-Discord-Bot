@@ -214,4 +214,18 @@ module.exports = class TmhiDatabase {
             comment,
         });
     }
+
+    /**
+     * Check if a permission exists in the database.
+     */
+    async permissionExists(permissionId) {
+        const [rows] = await this.pool.query(`
+            SELECT id FROM permissions
+            WHERE id=:permissionId
+        `, { permissionId });
+
+        console.log(rows);
+
+        return rows.length !== 0;
+    }
 };
