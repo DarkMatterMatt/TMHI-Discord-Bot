@@ -6,9 +6,11 @@ const GuildMember = require("discord.js/src/structures/GuildMember");
  * Holds all the information about a single TMHI member.
  */
 module.exports = class TmhiMember extends GuildMember {
-    constructor(guildMember, tmhiDatabase, {
-        timezone = "",
+    constructor(guildMember, {
+        timezone        = "",
         tmhiPermissions = new Collection(),
+        wikiId          = 0,
+        email           = "",
     } = {}) {
         // copy over guildMember data
         super(guildMember.client, {
@@ -19,9 +21,10 @@ module.exports = class TmhiMember extends GuildMember {
             roles:         guildMember._roles,
         }, guildMember.guild);
 
-        this.timezone         = timezone;        // String
-        this._tmhiPermissions = tmhiPermissions; // Collection
-        this.tmhiDatabase     = tmhiDatabase;    // TmhiDatabase
+        this.timezone        = timezone;        // String
+        this.tmhiPermissions = tmhiPermissions; // Collection
+        this.wikiId          = wikiId;          // Integer
+        this.email           = email;           // String
     }
 
     /**
@@ -33,13 +36,6 @@ module.exports = class TmhiMember extends GuildMember {
 
     set timezone(timezone) {
         this._timezone = (timezone || "").toUpperCase();
-    }
-
-    /**
-     * The TMHI permissions for this member, taking only roles into account.
-     */
-    get tmhiPermissions() {
-        return this._tmhiPermissions;
     }
 
     hasPermission(permissionId) {

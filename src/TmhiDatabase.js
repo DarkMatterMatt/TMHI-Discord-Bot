@@ -1,5 +1,5 @@
 // imports
-const mysql       = require("mysql2/promise");
+const mysql      = require("mysql2/promise");
 
 const Collection = require("discord.js/src/util/Collection");
 const TmhiMember = require("./TmhiMember.js");
@@ -13,17 +13,32 @@ module.exports = class TmhiDatabase {
         this.pool.pool.config.connectionConfig.namedPlaceholders = true;
     }
 
+    async loadGuildPrefix(guild) {
+        const [rows] = this.pool.query(`
+            SELECT prefix
+            FROM guilds
+            WHERE id=:guildId
+        ;`, { guildId: guild.id });
+
+        if (rows.length === 0) {
+            // no guild prefix in database
+            return false;
+        }
+
+        return rows[0].prefix;
+    }
+
     /*
      * Add a Discord user to the database.
      *
      * @param  guildMember  The member to add.
      */
-    async addUserToDatabase(guildMember) {
+    async addMember(guildMember) {
         return this.pool.query(`
             INSERT INTO users (id, displayname)
             VALUES (:id, :displayname)
             ON DUPLICATE KEY
-            UPDATE displayName=:displayname
+            UPDATE displayname=:displayname
         ;`, {
             id:          guildMember.id,
             displayname: guildMember.displayName,
@@ -41,8 +56,8 @@ module.exports = class TmhiDatabase {
 
         // load user from database
         [rows] = await this.pool.query(`
-            SELECT timezone
-            FROM users
+            SELECT timezone, wikiid as wikiId, email
+            FROM members
             WHERE id=:id
         ;`, { id: guildMember.id });
 
@@ -50,22 +65,46 @@ module.exports = class TmhiDatabase {
         if (rows.length === 0) {
             throw new Error(`Failed loading user with id: ${guildMember.id}`);
         }
-        const { timezone } = rows[0];
+        const { timezone, wikiId, email } = rows[0];
 
-        // load permissions for user
+        // permissions for user
+        const permissions = new Collection();
+
+        // load permissions from roles
         [rows] = await this.pool.query(`
             SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
             FROM rolepermissions
             JOIN permissions ON rolepermissions.permissionid=permissions.id
-            WHERE rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
-        ;`, guildMember.roles.map(r => r.id));
+            WHERE rolepermissions.guildid=?
+                AND rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
+        ;`, [guildMember.guild.id, ...guildMember.roles.map(r => r.id)]);
 
-        // map permissions into a Collection
-        const permissions = new Collection();
         rows.forEach(row => {
             permissions.set(row.id, {
+                id:      row.id,
                 name:    row.name,
                 comment: row.comment,
+                guild:   guildMember.guild,
+            });
+        });
+
+        // load user-specific permissions
+        [rows] = await this.pool.query(`
+            SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
+            FROM memberpermissions
+            JOIN permissions ON memberpermissions.permissionid=permissions.id
+            WHERE memberpermissions.memberid=:memberId AND memberpermissions.guildid=:guildId
+        ;`, {
+            memberId: guildMember.id,
+            guildId:  guildMember.guild.id,
+        });
+
+        rows.forEach(row => {
+            permissions.set(row.id, {
+                id:      row.id,
+                name:    row.name,
+                comment: row.comment,
+                guild:   guildMember.guild,
             });
         });
 
@@ -77,9 +116,11 @@ module.exports = class TmhiDatabase {
             });
         }
 
-        return new TmhiMember(guildMember, this, {
+        return new TmhiMember(guildMember, {
             timezone,
             tmhiPermissions: permissions,
+            wikiId,
+            email,
         });
     }
 
@@ -87,27 +128,19 @@ module.exports = class TmhiDatabase {
      * Add a guild role to the database.
      * This should only be called after a role has been added via the Discord server.
      */
-    async addGuildRole(roleId, name, comment = null) {
-        if (comment === null) {
-            return this.pool.query(`
-                INSERT INTO roles (id, name)
-                VALUES (:roleId, :name)
-                ON DUPLICATE KEY
-                UPDATE name=:name
-            `, {
-                roleId,
-                name,
-            });
-        }
-
+    async storeGuildRole(role, comment = null) {
         return this.pool.query(`
-            INSERT INTO roles (id, name, comment)
-            VALUES (:roleId, :name, :comment)
+            INSERT INTO roles (id, guildid, name, hexcolor, discordpermissions, ${comment ? ", comment" : ""})
+            VALUES (:roleId, :guildId, :name, :hexColor, :discordPermissions, ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
-            UPDATE name=:name, comment=:comment
+            UPDATE name=:name, hexcolor=:hexColor, discordpermissions=:permissions
+                ${comment !== null ? ", comment=:comment" : ""})
         `, {
-            roleId,
-            name,
+            roleId:      role.id,
+            guildId:     role.guild.id,
+            name:        role.name,
+            hexColor:    role.hexColor,
+            permissions: role.permissions,
             comment,
         });
     }
@@ -116,48 +149,35 @@ module.exports = class TmhiDatabase {
      * Deletes guild roles that are NOT in the list of roles provided.
      * This should only be called when syncing guild roles.
      */
-    async deleteGuildRolesExcluding(roles) {
+    async deleteGuildRolesExcluding(guild, roles) {
         return this.pool.query(`
             DELETE FROM roles
-            WHERE id NOT IN (${Array(roles.size).fill("?").join()})
-        `, roles.map(r => r.id));
+            WHERE guildid=? AND id NOT IN (${Array(roles.size).fill("?").join()})
+        `, [guild.id, ...roles.map(r => r.id)]);
     }
 
-    async syncGuildRoles(roles) {
+    async syncGuildRoles(guild) {
         // remove roles that no longer exist
-        this.deleteGuildRolesExcluding(roles);
+        await this.deleteGuildRolesExcluding(guild, guild.roles);
 
         // add roles
-        roles.forEach((role, roleId) => {
-            this.addGuildRole(roleId, role.name);
-        });
+        return Promise.all(guild.roles.map(role => this.storeGuildRole(role)));
     }
 
     /**
      * Add a TMHI Discord role for the member to the database.
      * This should only be called after a role has been added via the Discord server.
      */
-    async addMemberRole(userId, roleId, comment = null) {
-        if (comment === null) {
-            return this.pool.query(`
-                INSERT INTO userroles (userid, roleid)
-                VALUES (:userId, :roleId)
-                ON DUPLICATE KEY
-                UPDATE id=id
-            `, {
-                userId,
-                roleId,
-            });
-        }
-
+    async storeMemberRole(member, role, comment = null) {
         return this.pool.query(`
-            INSERT INTO userroles (userid, roleid, comment)
-            VALUES (:userId, :roleId, :comment)
+            INSERT INTO memberroles (memberid, roleid, guildid ${comment ? ", comment" : ""})
+            VALUES (:memberId, :roleId, :guildId ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
-            UPDATE comment=:comment
+            UPDATE memberid=memberid ${comment ? ", comment=:comment" : ""}
         `, {
-            userId,
-            roleId,
+            memberId: member.id,
+            roleId:   role.id,
+            guildId:  role.guild.id,
             comment,
         });
     }
@@ -166,35 +186,38 @@ module.exports = class TmhiDatabase {
      * Deletes all roles for the member that are NOT in the list of roles provided.
      * This should only be called when syncing roles.
      */
-    async deleteMemberRolesExcluding(userId, roles) {
+    async deleteMemberRolesExcluding(member, roles) {
         return this.pool.query(`
-            DELETE FROM userroles
-            WHERE userid=? AND roleid NOT IN (${Array(roles.size).fill("?").join()})
-        `, [userId, ...roles.map(r => r.id)]);
+            DELETE FROM memberroles
+            WHERE memberid=? AND guildid=? AND roleid NOT IN (${Array(roles.size).fill("?").join()})
+        `, [member.id, member.guild.id, ...roles.map(r => r.id)]);
     }
 
-    async syncMemberRoles(userId, roles) {
+    async syncMemberRoles(member) {
         // remove roles that the user no longer has
-        await this.deleteMemberRolesExcluding(userId, roles);
+        await this.deleteMemberRolesExcluding(member, member.roles);
 
         // add roles
-        roles.keyArray().forEach(async (roleId) => {
-            await this.addMemberRole(userId, roleId);
-        });
+        return Promise.all(member.roles.map(role => this.storeMemberRole(member, role)));
     }
 
     /**
      * Grants a permission to a TMHI Discord role in the database.
      */
-    async grantRolePermission(roleId, permissionId, comment = "") {
+    async grantRolePermission(role, permission, comment = null) {
+        if (role.guild.id !== permission.guild.id) {
+            throw new Error("Cannot grant a permission to a role from another server!");
+        }
+
         return this.pool.query(`
-            INSERT INTO rolepermissions (roleid, permissionid, comment)
-            VALUES (:roleId, :permissionId, :comment)
+            INSERT INTO rolepermissions (roleid, permissionid, guildid ${comment ? ", comment" : ""})
+            VALUES (:roleId, :permissionId, :guildId ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
-            UPDATE comment=:comment
+            UPDATE roleid=roleid ${comment ? ", comment=:comment" : ""}
         `, {
-            roleId,
-            permissionId,
+            roleId:       role.id,
+            permissionId: permission.id,
+            guildId:      role.guild.id,
             comment,
         });
     }
@@ -202,29 +225,31 @@ module.exports = class TmhiDatabase {
     /**
      * Creates a new permission type in the database.
      */
-    async createPermissionType(permissionId, name, comment = "") {
+    async createPermission(permission) {
         return this.pool.query(`
-            INSERT INTO permissions (id, name, comment)
-            VALUES (:id, :name, :comment)
+            INSERT INTO permissions (id, guildid, name ${permission.comment ? ", comment" : ""})
+            VALUES (:permissionId, :guildid, :name ${permission.comment ? ", :comment" : ""})
             ON DUPLICATE KEY
-            UPDATE name=:name, comment=:comment
+            UPDATE name=:name ${permission.comment ? ", comment=:comment" : ""}
         `, {
-            id: permissionId,
-            name,
-            comment,
+            permissionId: permission.id,
+            guildid:      permission.guild.id,
+            name:         permission.name,
+            comment:      permission.comment,
         });
     }
 
     /**
      * Check if a permission exists in the database.
      */
-    async permissionExists(permissionId) {
+    async permissionExists(permission) {
         const [rows] = await this.pool.query(`
             SELECT id FROM permissions
-            WHERE id=:permissionId
-        `, { permissionId });
-
-        console.log(rows);
+            WHERE id=:permissionId AND guildid=:guildId
+        `, {
+            permissionId: permission.id,
+            guildId:      permission.guild.id,
+        });
 
         return rows.length !== 0;
     }
