@@ -9,8 +9,6 @@ process.on("unhandledRejection", up => {
 const Discord        = require("discord.js");
 
 const secrets        = require("./secrets.js");
-const constants      = require("./constants.js");
-const helper         = require("./helper.js");
 const CommandManager = require("./CommandManager.js");
 const TmhiDatabase   = require("./TmhiDatabase.js");
 
@@ -24,48 +22,47 @@ client.on("ready", async () => {
     const tmhiDatabase = new TmhiDatabase(secrets.database);
     console.log("Connected to database");
 
-    // load TMHI guild
-    const guild = client.guilds.get(constants.config.guild);
-
-    // initialize user and command managers
+    // start listening for user commands
     const commandManager = new CommandManager(client, tmhiDatabase);
     commandManager.startListening();
 
-    // force update for all roles
-    await tmhiDatabase.syncGuildRoles(guild.roles);
+    client.guilds.forEach(async (guild) => {
+        // force update for all roles
+        await tmhiDatabase.syncGuildRoles(guild.roles);
 
-    // force update for all users
-    guild.members.forEach(async (member, id) => {
-        // skip bot users
-        if (member.user.bot) {
-            return;
-        }
+        // force update for all users
+        guild.members.forEach(async (member, id) => {
+            // skip bot users
+            if (member.user.bot) {
+                return;
+            }
 
-        // check that the user is added to the database
-        await tmhiDatabase.addUserToDatabase(member);
-        await tmhiDatabase.syncMemberRoles(member.id, member.roles);
+            // check that the user is added to the database
+            await tmhiDatabase.addUserToDatabase(member);
+            await tmhiDatabase.syncMemberRoles(member);
+        });
     });
 
     /*
      * New user has joined the server.
      */
-    client.on("guildMemberAdd", member => {
+    client.on("guildMemberAdd", async (member) => {
         // add the user to the database
-        tmhiDatabase.addUserToDatabase(member);
+        await tmhiDatabase.addUserToDatabase(member);
     });
 
     /*
      * Someone left the server.
      */
-    client.on("guildMemberRemove", async member => {
-
+    client.on("guildMemberRemove", async (member) => {
+        await tmhiDatabase.syncMemberRoles(member);
     });
 
     /*
      * The user has changed.
      */
-    client.on("guildMemberUpdate", async (_, member) => {
-
+    client.on("guildMemberUpdate", async (oldMember, newMember) => {
+        await tmhiDatabase.syncMemberRoles(newMember);
     });
 
     console.log("Finished initialization");

@@ -1,6 +1,3 @@
-// imports
-const constants   = require("./constants.js");
-
 /**
  * The CommandManager listens for, and acts on, user commands.
  */
@@ -12,12 +9,12 @@ module.exports = class CommandManager {
 
     startListening() {
         this.client.on("message", async (message) => {
-            const { prefix } = constants.config;
-
             // ignore messages from bots
             if (message.author.bot) {
                 return;
             }
+
+            const prefix = await this.tmhiDatabase.loadPrefix(message.guild.id) || `${this.client.user}`;
 
             // get text content
             let messageContent;
@@ -25,9 +22,9 @@ module.exports = class CommandManager {
                 // remove prefix
                 messageContent = message.content.slice(prefix.length);
             }
-            else if (message.content.startsWith(`<@${this.client.user.id}>`)) {
+            else if (message.content.startsWith(`${this.client.user}`)) {
                 // remove prefix
-                messageContent = message.content.slice(`<@${this.client.user.id}>`.length);
+                messageContent = message.content.slice(`${this.client.user}`.length);
             }
             // ignore messages that don't start with the specified prefix or @TMHI-Bot
             else {
