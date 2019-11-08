@@ -12,6 +12,8 @@ module.exports = class CommandManager {
 
     startListening() {
         this.client.on("message", async (message) => {
+            const { prefix } = constants.config;
+
             // ignore messages from bots
             if (message.author.bot) {
                 return;
@@ -19,9 +21,9 @@ module.exports = class CommandManager {
 
             // get text content
             let messageContent;
-            if (message.content.startsWith(constants.config.prefix)) {
+            if (message.content.startsWith(prefix)) {
                 // remove prefix
-                messageContent = message.content.slice(constants.config.prefix.length);
+                messageContent = message.content.slice(prefix.length);
             }
             else if (message.content.startsWith(`<@${this.client.user.id}>`)) {
                 // remove prefix
@@ -68,8 +70,7 @@ module.exports = class CommandManager {
                 case "getpermissions": {
                     if (args.length !== 0 && args.length !== 1) {
                         // more than one argument
-                        message.reply("Invalid syntax. "
-                            + `Syntax is: \`${constants.config.prefix}permissions [optional @someone]\``);
+                        message.reply(`Invalid syntax. Syntax is: \`${prefix}permissions [optional @someone]\``);
                         break;
                     }
 
@@ -114,7 +115,7 @@ module.exports = class CommandManager {
                     if (args.length !== 3) {
                         // incorrect number of arguments
                         message.reply("Invalid syntax. Syntax is: "
-                            + `\`${constants.config.prefix}createPermission `
+                            + `\`${prefix}createPermission `
                             + "PERMISSION_ID 'Permission Pretty Name' 'Permission Description'`");
                         break;
                     }
@@ -143,7 +144,7 @@ module.exports = class CommandManager {
                 case "grantrolepermission": {
                     if (args.length !== 2 && args.length !== 3) {
                         // incorrect number of arguments
-                        message.reply(`Invalid syntax. Syntax is: \`${constants.config.prefix}grantRolePermission `
+                        message.reply(`Invalid syntax. Syntax is: \`${prefix}grantRolePermission `
                             + "@role PERMISSION_ID 'Random comment'`");
                         break;
                     }
@@ -168,7 +169,7 @@ module.exports = class CommandManager {
                     if (!await this.tmhiDatabase.permissionExists(permissionId)) {
                         // permission doesn't exist
                         message.reply("That permission doesn't exist. You need to create it using"
-                            + `\`${constants.config.prefix}createPermission\``);
+                            + `\`${prefix}createPermission\``);
                         break;
                     }
 
