@@ -48,7 +48,7 @@ module.exports = class CommandManager {
                  * Replies with the current version of the bot.
                  */
                 case "version": {
-                    message.reply(`TMHI Discord Bot v${constants.version}`);
+                    message.reply(`TMHI Discord Bot v${process.env.npm_package_version}`);
                     break;
                 }
 
