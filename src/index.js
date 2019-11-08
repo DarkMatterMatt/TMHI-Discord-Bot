@@ -17,7 +17,7 @@ const TmhiDatabase   = require("./TmhiDatabase.js");
 // create the discord client
 const client = new Discord.Client();
 
-client.on("ready", () => {
+client.on("ready", async () => {
     console.log(`Logged in as ${client.user.tag}!`);
 
     // create the connection to database
@@ -32,18 +32,18 @@ client.on("ready", () => {
     commandManager.startListening();
 
     // force update for all roles
-    tmhiDatabase.syncGuildRoles(guild.roles);
+    await tmhiDatabase.syncGuildRoles(guild.roles);
 
     // force update for all users
-    guild.members.forEach((member, id) => {
+    guild.members.forEach(async (member, id) => {
         // skip bot users
         if (member.user.bot) {
             return;
         }
 
         // check that the user is added to the database
-        tmhiDatabase.addUserToDatabase(member);
-        tmhiDatabase.syncMemberRoles(member.id, member.roles);
+        await tmhiDatabase.addUserToDatabase(member);
+        await tmhiDatabase.syncMemberRoles(member.id, member.roles);
     });
 
     /*

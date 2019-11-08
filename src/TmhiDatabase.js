@@ -87,7 +87,7 @@ module.exports = class TmhiDatabase {
      * Add a guild role to the database.
      * This should only be called after a role has been added via the Discord server.
      */
-    addGuildRole(roleId, name, comment = null) {
+    async addGuildRole(roleId, name, comment = null) {
         if (comment === null) {
             return this.pool.query(`
                 INSERT INTO roles (id, name)
@@ -116,14 +116,14 @@ module.exports = class TmhiDatabase {
      * Deletes guild roles that are NOT in the list of roles provided.
      * This should only be called when syncing guild roles.
      */
-    deleteGuildRolesExcluding(roles) {
+    async deleteGuildRolesExcluding(roles) {
         return this.pool.query(`
             DELETE FROM roles
             WHERE id NOT IN (${Array(roles.size).fill("?").join()})
         `, roles.map(r => r.id));
     }
 
-    syncGuildRoles(roles) {
+    async syncGuildRoles(roles) {
         // remove roles that no longer exist
         this.deleteGuildRolesExcluding(roles);
 
@@ -137,7 +137,7 @@ module.exports = class TmhiDatabase {
      * Add a TMHI Discord role for the member to the database.
      * This should only be called after a role has been added via the Discord server.
      */
-    addMemberRole(userId, roleId, comment = null) {
+    async addMemberRole(userId, roleId, comment = null) {
         if (comment === null) {
             return this.pool.query(`
                 INSERT INTO userroles (userid, roleid)
@@ -166,27 +166,27 @@ module.exports = class TmhiDatabase {
      * Deletes all roles for the member that are NOT in the list of roles provided.
      * This should only be called when syncing roles.
      */
-    deleteMemberRolesExcluding(userId, roles) {
+    async deleteMemberRolesExcluding(userId, roles) {
         return this.pool.query(`
             DELETE FROM userroles
             WHERE userid=? AND roleid NOT IN (${Array(roles.size).fill("?").join()})
         `, [userId, ...roles.map(r => r.id)]);
     }
 
-    syncMemberRoles(userId, roles) {
+    async syncMemberRoles(userId, roles) {
         // remove roles that the user no longer has
-        this.deleteMemberRolesExcluding(userId, roles);
+        await this.deleteMemberRolesExcluding(userId, roles);
 
         // add roles
-        roles.keyArray().forEach(roleId => {
-            this.addMemberRole(userId, roleId);
+        roles.keyArray().forEach(async (roleId) => {
+            await this.addMemberRole(userId, roleId);
         });
     }
 
     /**
      * Grants a permission to a TMHI Discord role in the database.
      */
-    grantRolePermission(roleId, permissionId, comment = "") {
+    async grantRolePermission(roleId, permissionId, comment = "") {
         return this.pool.query(`
             INSERT INTO rolepermissions (roleid, permissionid, comment)
             VALUES (:roleId, :permissionId, :comment)
@@ -202,7 +202,7 @@ module.exports = class TmhiDatabase {
     /**
      * Creates a new permission type in the database.
      */
-    createPermissionType(permissionId, name, comment = "") {
+    async createPermissionType(permissionId, name, comment = "") {
         return this.pool.query(`
             INSERT INTO permissions (id, name, comment)
             VALUES (:id, :name, :comment)
