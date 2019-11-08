@@ -17,7 +17,7 @@ CREATE TABLE guilds (
 CREATE TABLE members (
     id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     displayname         VARCHAR(255),
-    wikiid              INT             DEFAULT '0',
+    wikiid              INT             DEFAULT 0,
     email               VARCHAR(255),
     timezone            INT                             COMMENT 'UTC +-1300',
 
@@ -29,12 +29,14 @@ CREATE TABLE members (
 );
 
 CREATE TABLE roles (
-    id              VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
-    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
-    name            VARCHAR(255)    NOT NULL,
-    comment         VARCHAR(8192)   DEFAULT '',
+    id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    guildid             VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    name                VARCHAR(255)    NOT NULL,
+    hexcolor            VARCHAR(8)      DEFAULT '',
+    discordpermissions  BIGINT          DEFAULT 0,
+    comment             VARCHAR(8192)   DEFAULT '',
 
-    PRIMARY KEY     (id, guildid)
+    PRIMARY KEY         (id, guildid)
 );
 
 CREATE TABLE permissions (
