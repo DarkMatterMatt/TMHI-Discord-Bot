@@ -2,7 +2,22 @@
 Custom Discord bot for the TMHI Discord server
 
 ## Commands
-TODO
+_TODO_: lots more commands to add, in [CommandManager](src/CommandManager.js).
+
+Commands are displayed with the default prefix `!`. All parameters are
+positional. Required parameters `<param>`, optional parameters `[param]`.
+
+```
+!createPermission <id> <name> <comment>
+!createPermission FREE_DRINKS 'Free Drinks' 'Eligible for free drinks when we meet'
+```
+Create a new permission that a role can provide.
+
+```
+!grantRolePermission <role> <permissionId> <comment>
+!grantRolePermission @Mods FREE_DRINKS 'Moderators drink free!'
+```
+Grants a permission to a role. `<role>` can be an @mention or a role id.
 
 ## Contributing, Modifying the Code and Adding Features
 
@@ -21,7 +36,7 @@ git checkout -b <branch name> dev
 
 Perform the changes you want and commit them to git. We recommend you name your
 commit messages using an imperative present tense for consistency, such as
-"*Add name validation*" instead of "*This commit added a feature*".
+"_Add name validation_" instead of "_This commit added a feature_".
 
 ```sh
 git add <file>
@@ -61,8 +76,8 @@ This program requires the following information to run:
 ### Step 1. Getting the Discord Bot Token
 
 An existing Discord Bot in an existing Discord Application has already
-been made for TMHI. You will need to *create your own Discord Bot* to test your
-changes on *your own testing server*.
+been made for TMHI. You will need to _create your own Discord Bot_ to test your
+changes on _your own testing server_.
 
 1. Go to https://discordapp.com/developers/applications
 2. Create a new application, and give it an appropriate name.
@@ -94,6 +109,6 @@ replacement for MySQL, so the command `mysql` will run MariaDB if available.
 ### Running Locally
 
 Create a copy of `secrets.example.js` called `secrets.js`. Modify `secrets.js`
-with the bot token from Step 1 and the database connection details from Step 2.
+with the bot token from [Step 1](#step-1-getting-the-discord-bot-token) and the database connection details from [Step 2](#step-2-creating-a-database).
 
 Then run `npm start` to start the bot.
