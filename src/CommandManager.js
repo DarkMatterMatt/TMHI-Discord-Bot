@@ -14,7 +14,7 @@ module.exports = class CommandManager {
                 return;
             }
 
-            const prefix = await this.tmhiDatabase.loadPrefix(message.guild.id) || `${this.client.user}`;
+            const prefix = await this.tmhiDatabase.loadGuildPrefix(message.guild) || `${this.client.user}`;
 
             // get text content
             let messageContent;

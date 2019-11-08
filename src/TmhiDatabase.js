@@ -14,8 +14,8 @@ module.exports = class TmhiDatabase {
     }
 
     async loadGuildPrefix(guild) {
-        const [rows] = this.pool.query(`
-            SELECT prefix
+        const [rows] = await this.pool.query(`
+            SELECT commandPrefix
             FROM guilds
             WHERE id=:guildId
         ;`, { guildId: guild.id });
@@ -25,7 +25,7 @@ module.exports = class TmhiDatabase {
             return false;
         }
 
-        return rows[0].prefix;
+        return rows[0].commandPrefix;
     }
 
     /*
