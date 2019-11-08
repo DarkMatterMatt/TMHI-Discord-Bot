@@ -6,6 +6,8 @@ CREATE TABLE guilds (
     ownerid             VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
     iconurl             VARCHAR(255),
     region              VARCHAR(255),
+    mfalevel            INT,
+    verificationlevel   INT,
     createdtimestamp    BIGINT          COMMENT 'Milliseconds since Jan 1, 1970, 00:00:00.000 GMT',
 
     PRIMARY KEY         (id)
