@@ -138,26 +138,26 @@ module.exports = class CommandManager {
                 }
 
                 case "grantrolepermission": {
-                    // incorrect number of arguments
                     if (args.length !== 2 && args.length !== 3) {
+                        // incorrect number of arguments
                         message.reply("Invalid syntax. Syntax is: "
                             + `\`${constants.config.prefix}grantRolePermission `
-                            + "@role PERMISSION_ID 'Reason for granting permission'`");
+                            + "@role PERMISSION_ID 'Random comment'`");
                         break;
                     }
 
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
 
-                    // user doesn't have permission
                     if (!author.hasPermission("GRANT_ROLE_PERMISSIONS")) {
+                        // user doesn't have permission
                         message.reply("You're missing the GRANT_ROLE_PERMISSIONS permission");
                         break;
                     }
 
                     const roleId = args[0].replace(/\D/g);
 
-                    // role doesn't exist
                     if (!message.guild.roles.has(roleId)) {
+                        // role doesn't exist
                         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
                         break;
                     }
