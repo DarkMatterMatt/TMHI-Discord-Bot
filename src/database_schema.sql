@@ -1,35 +1,36 @@
 /* Main tables */
 
 CREATE TABLE guilds (
-    id                  VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     name                VARCHAR(255)    NOT NULL,
-    ownerid             VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    ownerid             VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     iconurl             VARCHAR(255),
-    region              VARCHAR(255),
+    region              VARCHAR(32),
     mfalevel            INT,
     verificationlevel   INT,
     createdtimestamp    BIGINT          COMMENT 'Milliseconds since Jan 1, 1970, 00:00:00.000 GMT',
+    commandprefix       VARCHAR(32),
 
     PRIMARY KEY         (id)
 );
 
 CREATE TABLE users (
-    id                  VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     displayname         VARCHAR(255),
     wikiid              INT             DEFAULT '0',
     email               VARCHAR(255),
     timezone            INT                             COMMENT 'UTC +-1300',
 
-    discordtoken        VARCHAR(255),
-    discordtokenexpires INT,
-    discordrefreshtoken VARCHAR(255),
+    discordtoken        VARCHAR(64),
+    discordtokenexpires BIGINT,
+    discordrefreshtoken VARCHAR(64),
 
     PRIMARY KEY         (id)
 );
 
 CREATE TABLE roles (
-    id              VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
-    guildid         VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    id              VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     name            VARCHAR(255)    NOT NULL,
     comment         VARCHAR(8192)   DEFAULT '',
 
@@ -38,7 +39,7 @@ CREATE TABLE roles (
 
 CREATE TABLE permissions (
     id              VARCHAR(255)    NOT NULL        COMMENT 'Readable id, e.g. WIKI_ACCESS',
-    guildid         VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     name            VARCHAR(255)    NOT NULL        COMMENT 'Name to show users, e.g. "Wiki Access"',
     comment         VARCHAR(8192)   DEFAULT '',
 
@@ -48,8 +49,8 @@ CREATE TABLE permissions (
 /* Linking tables */
 
 CREATE TABLE userguilds (
-    userid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
-    guildid         VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    userid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
     FOREIGN KEY     (userid)        REFERENCES  users(id),
@@ -59,9 +60,9 @@ CREATE TABLE userguilds (
 );
 
 CREATE TABLE userroles (
-    userid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
-    roleid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
-    guildid         VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    userid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    roleid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
     FOREIGN KEY     (userid)        REFERENCES  users(id),
@@ -72,9 +73,9 @@ CREATE TABLE userroles (
 );
 
 CREATE TABLE rolepermissions (
-    roleid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    roleid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     permissionid    VARCHAR(255)    NOT NULL,
-    guildid         VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
     FOREIGN KEY     (roleid)        REFERENCES  roles(id),
@@ -85,9 +86,9 @@ CREATE TABLE rolepermissions (
 );
 
 CREATE TABLE userpermissions (
-    userid          VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    userid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     permissionid    VARCHAR(255)    NOT NULL,
-    guildid         VARCHAR(255)    NOT NULL        COMMENT 'Discord Snowflake',
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
     FOREIGN KEY     (userid)        REFERENCES  users(id),
