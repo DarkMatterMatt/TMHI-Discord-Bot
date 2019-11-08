@@ -66,7 +66,7 @@ module.exports = class CommandManager {
                  */
                 case "permissions":
                 case "getpermissions": {
-                    if (args.length > 1) {
+                    if (args.length !== 0 && args.length !== 1) {
                         // more than one argument
                         message.reply("Invalid syntax. "
                             + `Syntax is: \`${constants.config.prefix}permissions [optional @someone]\``);
@@ -75,8 +75,8 @@ module.exports = class CommandManager {
 
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
 
-                    // fetching own permissions
                     if (args.length === 0) {
+                        // fetching own permissions
                         if (author.tmhiPermissions.size === 0) {
                             message.reply("You have no permissions :cry:");
                             break;
@@ -85,26 +85,27 @@ module.exports = class CommandManager {
                         message.reply(`Your permissions are: ${permissionsString}`);
                         break;
                     }
+
                     // args.length===1, fetching someone else's permissions
-                    // must have admin permissions to view another user's permissions
-                    if (author.hasPermission("TMHI_ADMIN")) {
-                        // load requested tmhiMember
-                        const memberIdToFetch = args[0].replace(/\D+/g, "");
-                        const member = await this.tmhiDatabase.loadTmhiMember(
-                            await message.guild.fetchMember(memberIdToFetch)
-                        );
-
-                        if (member.tmhiPermissions.size === 0) {
-                            message.reply(`${member.displayName} has no permissions`);
-                            break;
-                        }
-
-                        const permissionsString = member.tmhiPermissions.map(p => p.name).join(", ");
-                        message.reply(`${member.displayName}'s permissions are: ${permissionsString}`);
+                    if (!author.hasPermission("TMHI_ADMIN")) {
+                        // missing permissions
+                        message.reply("You must be an admin to view another user's permissions");
                         break;
                     }
-                    // not admin
-                    message.reply("You must be an admin to view another user's permissions");
+
+                    // load requested tmhiMember
+                    const memberIdToFetch = args[0].replace(/\D+/g, "");
+                    const member = await this.tmhiDatabase.loadTmhiMember(
+                        await message.guild.fetchMember(memberIdToFetch)
+                    );
+
+                    if (member.tmhiPermissions.size === 0) {
+                        message.reply(`${member.displayName} has no permissions`);
+                        break;
+                    }
+
+                    const permissionsString = member.tmhiPermissions.map(p => p.name).join(", ");
+                    message.reply(`${member.displayName}'s permissions are: ${permissionsString}`);
                     break;
                 }
 
@@ -119,29 +120,30 @@ module.exports = class CommandManager {
                     }
 
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
-                    // user must have permission to create new permissions
-                    if (author.hasPermission("CREATE_PERMISSIONS")) {
-                        const [rows] = await this.tmhiDatabase.createPermissionType(args[0], args[1], args[2]);
 
-                        // successful database update
-                        if (rows.affectedRows) {
-                            message.reply(`Created permission: ${args[0]}`);
-                            break;
-                        }
+                    if (author.hasPermission("CREATE_PERMISSIONS")) {
+                        // missing permission
+                        message.reply("You are missing the CREATE_PERMISSIONS permission");
+                        break;
+                    }
+
+                    const [rows] = await this.tmhiDatabase.createPermissionType(args[0], args[1], args[2]);
+
+                    if (!rows.affectedRows) {
                         // database operation failed
                         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
                         break;
                     }
-                    // no permissions
-                    message.reply("You are missing the CREATE_PERMISSIONS permission");
+
+                    // successful database update
+                    message.reply(`Created permission: ${args[0]}`);
                     break;
                 }
 
                 case "grantrolepermission": {
                     if (args.length !== 2 && args.length !== 3) {
                         // incorrect number of arguments
-                        message.reply("Invalid syntax. Syntax is: "
-                            + `\`${constants.config.prefix}grantRolePermission `
+                        message.reply(`Invalid syntax. Syntax is: \`${constants.config.prefix}grantRolePermission `
                             + "@role PERMISSION_ID 'Random comment'`");
                         break;
                     }
