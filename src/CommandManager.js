@@ -171,11 +171,11 @@ module.exports = class CommandManager {
                     if (args.length !== 2 && args.length !== 3) {
                         // incorrect number of arguments
                         message.reply(`Invalid syntax. Syntax is: \`${prefix}grantRolePermission `
-                            + "@role PERMISSION_ID 'Random comment'`");
+                            + "@role PERMISSION_ID ['Random comment']`");
                         break;
                     }
 
-                    const roleId = args[0].replace(/\D/g);
+                    const roleId = args[0].replace(/\D/g, "");
                     const [, permissionId, comment] = args;
 
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
