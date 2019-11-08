@@ -58,6 +58,35 @@ module.exports = class CommandManager {
                     break;
                 }
 
+                case "setprefix":
+                case "setcommandprefix": {
+                    if (args.length !== 1) {
+                        // incorrect number of arguments
+                        message.reply(`Invalid syntax. Syntax is: \`${prefix}setCommandPrefix newPrefix|null\``);
+                        break;
+                    }
+
+                    const newPrefix = args[0] === "null" ? null : args[0];
+                    const author = await this.tmhiDatabase.loadTmhiMember(message.member);
+
+                    if (!author.hasPermission("ADMIN")) {
+                        // missing permissions
+                        message.reply("You must be an admin to edit bot settings");
+                        break;
+                    }
+
+                    const [rows] = await this.tmhiDatabase.storeGuildPrefix(message.guild, newPrefix);
+                    if (!rows.affectedRows) {
+                        // database operation failed
+                        message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
+                        break;
+                    }
+
+                    // successful database update
+                    message.reply(`Updated command prefix to \`${args[0]}\``);
+                    break;
+                }
+
                 /*
                  * Load the users permissions
                  *
@@ -85,7 +114,7 @@ module.exports = class CommandManager {
                     }
 
                     // args.length===1, fetching someone else's permissions
-                    if (!author.hasPermission("TMHI_ADMIN")) {
+                    if (!author.hasPermission("ADMIN")) {
                         // missing permissions
                         message.reply("You must be an admin to view another user's permissions");
                         break;

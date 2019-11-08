@@ -13,6 +13,17 @@ module.exports = class TmhiDatabase {
         this.pool.pool.config.connectionConfig.namedPlaceholders = true;
     }
 
+    async storeGuildPrefix(guild, prefix) {
+        return this.pool.query(`
+            UPDATE guilds
+            SET commandPrefix=:prefix
+            WHERE id=:guildId
+        ;`, {
+            guildId: guild.id,
+            prefix,
+        });
+    }
+
     async loadGuildPrefix(guild) {
         const [rows] = await this.pool.query(`
             SELECT commandPrefix
