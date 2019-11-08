@@ -14,7 +14,7 @@ CREATE TABLE guilds (
     PRIMARY KEY         (id)
 );
 
-CREATE TABLE users (
+CREATE TABLE members (
     id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     displayname         VARCHAR(255),
     wikiid              INT             DEFAULT '0',
@@ -40,7 +40,7 @@ CREATE TABLE roles (
 CREATE TABLE permissions (
     id              VARCHAR(255)    NOT NULL        COMMENT 'Readable id, e.g. WIKI_ACCESS',
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
-    name            VARCHAR(255)    NOT NULL        COMMENT 'Name to show users, e.g. "Wiki Access"',
+    name            VARCHAR(255)    NOT NULL        COMMENT 'Name to show members, e.g. "Wiki Access"',
     comment         VARCHAR(8192)   DEFAULT '',
 
     PRIMARY KEY     (id)
@@ -48,28 +48,28 @@ CREATE TABLE permissions (
 
 /* Linking tables */
 
-CREATE TABLE userguilds (
-    userid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+CREATE TABLE memberguilds (
+    memberid        VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (userid)        REFERENCES  users(id),
+    FOREIGN KEY     (memberid)      REFERENCES  members(id),
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
 
-    PRIMARY KEY     (userid, guildid)
+    PRIMARY KEY     (memberid, guildid)
 );
 
-CREATE TABLE userroles (
-    userid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+CREATE TABLE memberroles (
+    memberid        VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     roleid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (userid)        REFERENCES  users(id),
+    FOREIGN KEY     (memberid)        REFERENCES  members(id),
     FOREIGN KEY     (roleid)        REFERENCES  roles(id),
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
 
-    PRIMARY KEY     (userid, roleid, guildid)
+    PRIMARY KEY     (memberid, roleid, guildid)
 );
 
 CREATE TABLE rolepermissions (
@@ -85,15 +85,15 @@ CREATE TABLE rolepermissions (
     PRIMARY KEY     (roleid, permissionid, guildid)
 );
 
-CREATE TABLE userpermissions (
-    userid          VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+CREATE TABLE memberpermissions (
+    memberid        VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     permissionid    VARCHAR(255)    NOT NULL,
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (userid)        REFERENCES  users(id),
+    FOREIGN KEY     (memberid)      REFERENCES  members(id),
     FOREIGN KEY     (permissionid)  REFERENCES  permissions(id),
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
 
-    PRIMARY KEY     (userid, permissionid, guildid)
+    PRIMARY KEY     (memberid, permissionid, guildid)
 );
