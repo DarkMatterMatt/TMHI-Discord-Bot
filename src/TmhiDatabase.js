@@ -29,13 +29,27 @@ module.exports = class TmhiDatabase {
     }
 
     /*
+     * Add a Discord guild to the database.
+     *
+     * @param  guild  The guild to add.
+     */
+    async addGuild(guild) {
+        return this.pool.query(`
+            INSERT INTO guilds (id, name, ownerid, iconurl, region, mfalevel, verificationlevel, createdtimestamp)
+            VALUES (:id, :name, :ownerID, :iconURL, :region, :mfaLevel, :verificationLevel, :createdTimestamp)
+            ON DUPLICATE KEY
+            UPDATE name=:name
+        ;`, guild);
+    }
+
+    /*
      * Add a Discord user to the database.
      *
      * @param  guildMember  The member to add.
      */
     async addMember(guildMember) {
         return this.pool.query(`
-            INSERT INTO users (id, displayname)
+            INSERT INTO members (id, displayname)
             VALUES (:id, :displayname)
             ON DUPLICATE KEY
             UPDATE displayname=:displayname
@@ -130,11 +144,11 @@ module.exports = class TmhiDatabase {
      */
     async storeGuildRole(role, comment = null) {
         return this.pool.query(`
-            INSERT INTO roles (id, guildid, name, hexcolor, discordpermissions, ${comment ? ", comment" : ""})
-            VALUES (:roleId, :guildId, :name, :hexColor, :discordPermissions, ${comment ? ", :comment" : ""})
+            INSERT INTO roles (id, guildid, name, hexcolor, discordpermissions ${comment ? ", comment" : ""})
+            VALUES (:roleId, :guildId, :name, :hexColor, :discordPermissions ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
             UPDATE name=:name, hexcolor=:hexColor, discordpermissions=:permissions
-                ${comment !== null ? ", comment=:comment" : ""})
+                ${comment !== null ? ", comment=:comment" : ""}
         `, {
             roleId:      role.id,
             guildId:     role.guild.id,
