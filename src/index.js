@@ -27,8 +27,11 @@ client.on("ready", async () => {
     commandManager.startListening();
 
     client.guilds.forEach(async (guild) => {
+        // add guild to database
+        await tmhiDatabase.addGuild(guild);
+
         // force update for all roles
-        await tmhiDatabase.syncGuildRoles(guild.roles);
+        await tmhiDatabase.syncGuildRoles(guild);
 
         // force update for all users
         guild.members.forEach(async (member, id) => {
@@ -38,7 +41,7 @@ client.on("ready", async () => {
             }
 
             // check that the user is added to the database
-            await tmhiDatabase.addUserToDatabase(member);
+            await tmhiDatabase.addMember(member);
             await tmhiDatabase.syncMemberRoles(member);
         });
     });
@@ -48,7 +51,7 @@ client.on("ready", async () => {
      */
     client.on("guildMemberAdd", async (member) => {
         // add the user to the database
-        await tmhiDatabase.addUserToDatabase(member);
+        await tmhiDatabase.addMember(member);
     });
 
     /*
