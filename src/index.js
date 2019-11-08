@@ -31,6 +31,9 @@ client.on("ready", () => {
     const commandManager = new CommandManager(client, tmhiDatabase);
     commandManager.startListening();
 
+    // force update for all roles
+    tmhiDatabase.syncGuildRoles(guild.roles);
+
     // force update for all users
     guild.members.forEach((member, id) => {
         // skip bot users
@@ -40,6 +43,7 @@ client.on("ready", () => {
 
         // check that the user is added to the database
         tmhiDatabase.addUserToDatabase(member);
+        tmhiDatabase.syncMemberRoles(member.id, member.roles);
     });
 
     /*

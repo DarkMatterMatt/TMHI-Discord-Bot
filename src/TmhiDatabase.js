@@ -54,7 +54,7 @@ module.exports = class TmhiDatabase {
 
         // load permissions for user
         [rows] = await this.pool.query(`
-            SELECT permissions.id as id, permissions.name as name, permissions.description as description
+            SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
             FROM rolepermissions
             JOIN permissions ON rolepermissions.permissionid=permissions.id
             WHERE rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
@@ -64,16 +64,16 @@ module.exports = class TmhiDatabase {
         const permissions = new Collection();
         rows.forEach(row => {
             permissions.set(row.id, {
-                name:        row.name,
-                description: row.description,
+                name:    row.name,
+                comment: row.comment,
             });
         });
 
         // owner has GOD_MODE permission
         if (guildMember.id === guildMember.guild.ownerID) {
             permissions.set("GOD_MODE", {
-                name:        "God Mode",
-                description: "You're the boss, so you can do anything!",
+                name:    "God Mode",
+                comment: "You're the boss, so you can do anything!",
             });
         }
 
@@ -84,10 +84,72 @@ module.exports = class TmhiDatabase {
     }
 
     /**
+     * Add a guild role to the database.
+     * This should only be called after a role has been added via the Discord server.
+     */
+    addGuildRole(roleId, name, comment = null) {
+        if (comment === null) {
+            return this.pool.query(`
+                INSERT INTO roles (id, name)
+                VALUES (:roleId, :name)
+                ON DUPLICATE KEY
+                UPDATE name=:name
+            `, {
+                roleId,
+                name,
+            });
+        }
+
+        return this.pool.query(`
+            INSERT INTO roles (id, name, comment)
+            VALUES (:roleId, :name, :comment)
+            ON DUPLICATE KEY
+            UPDATE name=:name, comment=:comment
+        `, {
+            roleId,
+            name,
+            comment,
+        });
+    }
+
+    /**
+     * Deletes guild roles that are NOT in the list of roles provided.
+     * This should only be called when syncing guild roles.
+     */
+    deleteGuildRolesExcluding(roles) {
+        return this.pool.query(`
+            DELETE FROM roles
+            WHERE id NOT IN (${Array(roles.size).fill("?").join()})
+        `, roles.map(r => r.id));
+    }
+
+    syncGuildRoles(roles) {
+        // remove roles that no longer exist
+        this.deleteGuildRolesExcluding(roles);
+
+        // add roles
+        roles.forEach((role, roleId) => {
+            this.addGuildRole(roleId, role.name);
+        });
+    }
+
+    /**
      * Add a TMHI Discord role for the member to the database.
      * This should only be called after a role has been added via the Discord server.
      */
-    addMemberRole(userId, roleId, comment = "") {
+    addMemberRole(userId, roleId, comment = null) {
+        if (comment === null) {
+            return this.pool.query(`
+                INSERT INTO userroles (userid, roleid)
+                VALUES (:userId, :roleId)
+                ON DUPLICATE KEY
+                UPDATE id=id
+            `, {
+                userId,
+                roleId,
+            });
+        }
+
         return this.pool.query(`
             INSERT INTO userroles (userid, roleid, comment)
             VALUES (:userId, :roleId, :comment)
@@ -97,6 +159,27 @@ module.exports = class TmhiDatabase {
             userId,
             roleId,
             comment,
+        });
+    }
+
+    /**
+     * Deletes all roles for the member that are NOT in the list of roles provided.
+     * This should only be called when syncing roles.
+     */
+    deleteMemberRolesExcluding(userId, roles) {
+        return this.pool.query(`
+            DELETE FROM userroles
+            WHERE userid=? AND roleid NOT IN (${Array(roles.size).fill("?").join()})
+        `, [userId, ...roles.map(r => r.id)]);
+    }
+
+    syncMemberRoles(userId, roles) {
+        // remove roles that the user no longer has
+        this.deleteMemberRolesExcluding(userId, roles);
+
+        // add roles
+        roles.keyArray().forEach(roleId => {
+            this.addMemberRole(userId, roleId);
         });
     }
 
