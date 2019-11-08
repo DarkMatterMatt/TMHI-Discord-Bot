@@ -138,8 +138,8 @@ module.exports = class CommandManager {
                 }
 
                 case "grantrolepermission": {
+                    // incorrect number of arguments
                     if (args.length !== 2 && args.length !== 3) {
-                        // incorrect number of arguments
                         message.reply("Invalid syntax. Syntax is: "
                             + `\`${constants.config.prefix}grantRolePermission `
                             + "@role PERMISSION_ID 'Reason for granting permission'`");
@@ -148,29 +148,30 @@ module.exports = class CommandManager {
 
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
 
-                    // user must have permission to create new permissions
-                    if (author.hasPermission("GRANT_ROLE_PERMISSIONS")) {
-                        const roleId = args[0].replace(/\D/g);
+                    // user doesn't have permission
+                    if (!author.hasPermission("GRANT_ROLE_PERMISSIONS")) {
+                        message.reply("You're missing the GRANT_ROLE_PERMISSIONS permission");
+                        break;
+                    }
 
-                        // role id exists
-                        if (message.guild.roles.has(roleId)) {
-                            const [rows] = await this.tmhiDatabase.grantRolePermission(roleId, args[1], args[2]);
+                    const roleId = args[0].replace(/\D/g);
 
-                            // successful database update
-                            if (rows.affectedRows) {
-                                message.reply(`Granted ${args[1]} to ${message.guild.roles.get(roleId)}`);
-                                break;
-                            }
-                            // database operation failed
-                            message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
-                            break;
-                        }
-                        // role doesn't exist
+                    // role doesn't exist
+                    if (!message.guild.roles.has(roleId)) {
                         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
                         break;
                     }
-                    // no permissions
-                    message.reply("You're missing the GRANT_ROLE_PERMISSIONS permission");
+
+                    const [rows] = await this.tmhiDatabase.grantRolePermission(roleId, args[1], args[2]);
+
+                    if (rows.affectedRows === 0) {
+                        // database operation failed
+                        message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
+                        break;
+                    }
+
+                    // successful database update
+                    message.reply(`Granted ${args[1]} to ${message.guild.roles.get(roleId)}`);
                     break;
                 }
 
