@@ -1,6 +1,12 @@
 # TMHI-Discord-Bot
 Custom Discord bot for the TMHI Discord server
 
+## Required Permissions
+1. Send Messages
+2. Manage Messages: lets the bot delete command messages after they've been processed
+   (if the `DELETE_COMMAND_MESSAGES` setting is enabled)
+3. Add Reactions
+
 ## Commands
 _TODO_: lots more commands to add, in [CommandManager](src/CommandManager.js).
 
