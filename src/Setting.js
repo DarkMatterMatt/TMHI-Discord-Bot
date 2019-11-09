@@ -4,7 +4,7 @@
 module.exports = class Setting {
     constructor({
         id,
-        name = null,
+        name = "",
         comment = "",
         defaultValue,
         value,
@@ -34,6 +34,10 @@ module.exports = class Setting {
 
     set comment(comment) {
         this._comment = comment;
+    }
+
+    get rawValue() {
+        return this._value;
     }
 
     get numberValue() {
