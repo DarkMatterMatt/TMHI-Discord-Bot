@@ -39,8 +39,8 @@ module.exports = class TmhiMember extends GuildMember {
     }
 
     hasPermission(permissionId) {
-        // server owner has all permissions
-        if (this.tmhiPermissions.has("GOD_MODE")) {
+        // server owner and admins have all permissions
+        if (this.tmhiPermissions.has("GOD_MODE") || this.tmhiPermissions.has("ADMIN")) {
             return true;
         }
         return this.tmhiPermissions.has(permissionId);
