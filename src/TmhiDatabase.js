@@ -3,6 +3,7 @@ const mysql      = require("mysql2/promise");
 
 const Collection = require("discord.js/src/util/Collection");
 const TmhiMember = require("./TmhiMember.js");
+const Permission = require("./Permission.js");
 
 /**
  * Holds contains TMHI database related methods
@@ -105,15 +106,15 @@ module.exports = class TmhiDatabase {
         ;`, [guildMember.guild.id, ...guildMember.roles.map(r => r.id)]);
 
         rows.forEach(row => {
-            permissions.set(row.id, {
+            permissions.set(row.id, new Permission({
                 id:      row.id,
                 name:    row.name,
                 comment: row.comment,
                 guild:   guildMember.guild,
-            });
+            }));
         });
 
-        // load user-specific permissions
+        // load member-specific permissions
         [rows] = await this.pool.query(`
             SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
             FROM memberpermissions
@@ -125,20 +126,22 @@ module.exports = class TmhiDatabase {
         });
 
         rows.forEach(row => {
-            permissions.set(row.id, {
+            permissions.set(row.id, new Permission({
                 id:      row.id,
                 name:    row.name,
                 comment: row.comment,
                 guild:   guildMember.guild,
-            });
+            }));
         });
 
         // owner has GOD_MODE permission
         if (guildMember.id === guildMember.guild.ownerID) {
-            permissions.set("GOD_MODE", {
+            permissions.set("GOD_MODE", new Permission({
+                id:      "GOD_MODE",
                 name:    "God Mode",
                 comment: "You're the boss, so you can do anything!",
-            });
+                guild:   guildMember.guild,
+            }));
         }
 
         return new TmhiMember(guildMember, {
