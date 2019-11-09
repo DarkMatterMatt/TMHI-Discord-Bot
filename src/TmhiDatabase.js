@@ -214,22 +214,22 @@ module.exports = class TmhiDatabase {
 
     async initializeGuildPermissions(guild) {
         this.createPermission({
-            permissionId: "ADMIN",
-            guildid:      guild.id,
-            name:         "Admin",
-            comment:      "Admins can run any commands",
+            id:      "ADMIN",
+            name:    "Admin",
+            comment: "Admins can run any commands",
+            guild,
         });
         this.createPermission({
-            permissionId: "CREATE_PERMISSIONS",
-            guildid:      guild.id,
-            name:         "Create Permissions",
-            comment:      "Run !createPermissions",
+            id:      "CREATE_PERMISSIONS",
+            name:    "Create Permissions",
+            comment: "Run !createPermissions",
+            guild,
         });
         this.createPermission({
-            permissionId: "GRANT_ROLE_PERMISSIONS",
-            guildid:      guild.id,
-            name:         "Grant Role Permissions",
-            comment:      "Run !grantRolePermissions",
+            id:      "GRANT_ROLE_PERMISSIONS",
+            name:    "Grant Role Permissions",
+            comment: "Run !grantRolePermissions",
+            guild,
         });
     }
 
