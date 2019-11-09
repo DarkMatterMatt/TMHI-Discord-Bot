@@ -27,23 +27,14 @@ client.on("ready", async () => {
     commandManager.startListening();
 
     client.guilds.forEach(async (guild) => {
-        // add guild to database
-        await tmhiDatabase.addGuild(guild);
+        await tmhiDatabase.syncGuild(guild);
+    });
 
-        // force update for all roles
-        await tmhiDatabase.syncGuildRoles(guild);
-
-        // force update for all users
-        guild.members.forEach(async (member, id) => {
-            // skip bot users
-            if (member.user.bot) {
-                return;
-            }
-
-            // check that the user is added to the database
-            await tmhiDatabase.addMember(member);
-            await tmhiDatabase.syncMemberRoles(member);
-        });
+    /*
+     * Bot joined a new server.
+     */
+    client.on("guildCreate", async (guild) => {
+        await tmhiDatabase.syncGuild(guild);
     });
 
     /*
