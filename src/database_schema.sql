@@ -7,7 +7,7 @@ CREATE TABLE settings (
     defaultvalue        VARCHAR(255)    NOT NULL,
 
     PRIMARY KEY         (id)
-)
+);
 
 CREATE TABLE guilds (
     id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
@@ -66,9 +66,9 @@ CREATE TABLE guildsettings (
     value           VARCHAR(255),
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (settingid)     REFERENCES  settings(id),
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
-    PRIMARY KEY     (memberid, guildid)
+    FOREIGN KEY     (settingid)     REFERENCES  settings(id),
+    PRIMARY KEY     (guildid, settingid)
 );
 
 CREATE TABLE memberguilds (

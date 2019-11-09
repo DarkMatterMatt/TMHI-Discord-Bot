@@ -182,7 +182,7 @@ module.exports = class TmhiDatabase {
     async storeGuildRole(role, comment = null) {
         return this.pool.query(`
             INSERT INTO roles (id, guildid, name, hexcolor, discordpermissions ${comment ? ", comment" : ""})
-            VALUES (:roleId, :guildId, :name, :hexColor, :discordPermissions ${comment ? ", :comment" : ""})
+            VALUES (:roleId, :guildId, :name, :hexColor, :permissions ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
             UPDATE name=:name, hexcolor=:hexColor, discordpermissions=:permissions
                 ${comment !== null ? ", comment=:comment" : ""}
