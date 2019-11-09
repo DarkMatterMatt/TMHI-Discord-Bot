@@ -1,5 +1,14 @@
 /* Main tables */
 
+CREATE TABLE settings (
+    id                  VARCHAR(255)    NOT NULL,
+    name                VARCHAR(255)    NOT NULL,
+    comment             VARCHAR(8192)   DEFAULT '',
+    defaultvalue        VARCHAR(255)    NOT NULL,
+
+    PRIMARY KEY         (id)
+)
+
 CREATE TABLE guilds (
     id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     name                VARCHAR(255)    NOT NULL,
@@ -9,8 +18,6 @@ CREATE TABLE guilds (
     mfalevel            INT,
     verificationlevel   INT,
     createdtimestamp    BIGINT          COMMENT 'Milliseconds since Jan 1, 1970, 00:00:00.000 GMT',
-    commandprefix       VARCHAR(32),
-    deletecommandmessage  BOOLEAN       DEFAULT 1,      COMMENT 'Delete command message after executing',
 
     PRIMARY KEY         (id)
 );
@@ -35,7 +42,7 @@ CREATE TABLE roles (
     name                VARCHAR(255)    NOT NULL,
     hexcolor            VARCHAR(8)      NOT NULL,
     discordpermissions  BIGINT          NOT NULL,
-    comment             VARCHAR(8192)   NOT NULL,
+    comment             VARCHAR(8192)   DEFAULT '',
 
     FOREIGN KEY         (guildid)       REFERENCES  guilds(id),
     PRIMARY KEY         (id, guildid)
@@ -52,6 +59,17 @@ CREATE TABLE permissions (
 );
 
 /* Linking tables */
+
+CREATE TABLE guildsettings (
+    guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
+    settingid       VARCHAR(255)    NOT NULL,
+    value           VARCHAR(255),
+    comment         VARCHAR(8192)   DEFAULT '',
+
+    FOREIGN KEY     (settingid)     REFERENCES  settings(id),
+    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
+    PRIMARY KEY     (memberid, guildid)
+);
 
 CREATE TABLE memberguilds (
     memberid        VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
@@ -98,3 +116,7 @@ CREATE TABLE memberpermissions (
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
     PRIMARY KEY     (memberid, permissionid, guildid)
 );
+
+/* Settings */
+INSERT INTO settings (id, name, defaultvalue)          VALUES ('COMMAND_PREFIX',         'Command Prefix',         '!');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE', 'Delete Command Message', '1', 'Delete command message after executing');

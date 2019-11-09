@@ -4,6 +4,7 @@ const mysql      = require("mysql2/promise");
 const Collection = require("discord.js/src/util/Collection");
 const TmhiMember = require("./TmhiMember.js");
 const Permission = require("./Permission.js");
+const Setting    = require("./Setting.js");
 
 /**
  * Holds contains TMHI database related methods
@@ -25,19 +26,41 @@ module.exports = class TmhiDatabase {
         });
     }
 
-    async loadGuildPrefix(guild) {
-        const [rows] = await this.pool.query(`
-            SELECT commandPrefix
-            FROM guilds
-            WHERE id=:guildId
+    async loadGuildSettings(guild) {
+        // settings for guild
+        const settings = new Collection();
+        let rows;
+
+        // load descriptions & default values
+        [rows] = await this.pool.query(`
+            SELECT id, name, comment, defaultvalue
+            FROM settings
+        ;`);
+
+        rows.forEach(row => {
+            settings.set(row.id, new Setting({
+                id:           row.id,
+                name:         row.name,
+                comment:      row.comment,
+                defaultValue: row.defaultvalue,
+                guild,
+            }));
+        });
+
+        // load guild settings
+        [rows] = await this.pool.query(`
+            SELECT settingid, value, comment
+            FROM guildsettings
+            WHERE guildid=:guildId
         ;`, { guildId: guild.id });
 
-        if (rows.length === 0) {
-            // no guild prefix in database
-            return false;
-        }
+        rows.forEach(row => {
+            const setting = settings.get(row.settingid);
+            setting.value = row.value;
+            setting.guildComment = row.comment;
+        });
 
-        return rows[0].commandPrefix;
+        return settings;
     }
 
     /*

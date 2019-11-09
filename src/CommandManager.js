@@ -14,7 +14,11 @@ module.exports = class CommandManager {
                 return;
             }
 
-            const prefix = await this.tmhiDatabase.loadGuildPrefix(message.guild) || `${this.client.user}`;
+            const settings = await this.tmhiDatabase.loadGuildSettings(message.guild);
+            let prefix     = settings.get("COMMAND_PREFIX").value;
+            if (prefix === null) {
+                prefix = `${this.client.user}`;
+            }
 
             // get text content
             let messageContent;
@@ -218,6 +222,10 @@ module.exports = class CommandManager {
                 default: {
                     // TODO: direct message the user with the help text
                 }
+            }
+            // delete command message if setting enabled
+            if (settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+                message.delete();
             }
         });
     }
