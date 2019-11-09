@@ -15,15 +15,44 @@ module.exports = class TmhiDatabase {
         this.pool.pool.config.connectionConfig.namedPlaceholders = true;
     }
 
-    async storeGuildPrefix(guild, prefix) {
-        return this.pool.query(`
-            UPDATE guilds
-            SET commandPrefix=:prefix
-            WHERE id=:guildId
-        ;`, {
-            guildId: guild.id,
-            prefix,
-        });
+    async storeGuildSettings(settings) {
+        const queries = await Promise.all(settings.map(async (setting) => {
+            // delete guildsetting entry if using default values
+            if (setting.rawValue === undefined || setting.rawValue === null) {
+                return this.pool.query(`
+                    DELETE FROM guildsettings
+                    WHERE guildid=:guildId AND settingid=:settingId
+                ;`, {
+                    guildId:   setting.guild.id,
+                    settingId: setting.id,
+                });
+            }
+            // upsert guildsetting entry with setting value and comment
+            return this.pool.query(`
+                INSERT INTO guildsettings (guildid, settingid, value ${setting.comment ? ", comment" : ""})
+                VALUES (:guildId, :settingId, :value ${setting.comment ? ", :comment" : ""})
+                ON DUPLICATE KEY
+                UPDATE value=:value ${setting.comment ? ", comment=:comment" : ""}
+            ;`, {
+                guildId:   setting.guild.id,
+                settingId: setting.id,
+                value:     setting.value,
+                comment:   setting.comment,
+            });
+        }));
+
+        // affected rows of all queries combined
+        queries.affectedRows = queries.reduce((tot, query) => tot + query[0].affectedRows, 0);
+
+        return queries;
+    }
+
+    async storeGuildSetting(setting) {
+        const settings = new Collection();
+        settings.set(setting.id, setting);
+
+        const queries = await this.storeGuildSettings(settings);
+        return queries[0];
     }
 
     async loadGuildSettings(guild) {
