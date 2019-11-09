@@ -14,8 +14,8 @@ module.exports = class Setting {
         this.id           = id;
         this.name         = name || id;
         this._comment     = comment;
-        this.defaultValue = defaultValue.toString();
-        this._value       = value.toString();
+        this.defaultValue = defaultValue;
+        this._value       = value;
         this.guild        = guild;
         this.guildComment = guildComment;
     }
@@ -25,7 +25,7 @@ module.exports = class Setting {
     }
 
     set value(value) {
-        this._value = value.toString();
+        this._value = value;
     }
 
     get comment() {
@@ -41,7 +41,7 @@ module.exports = class Setting {
     }
 
     get boolValue() {
-        return !["0", "false", "off"].includes(this.value);
+        return ![0, false, null, "0", "false", "off"].includes(this.value);
     }
 
     get enabled() {
