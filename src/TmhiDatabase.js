@@ -189,6 +189,50 @@ module.exports = class TmhiDatabase {
         return Promise.all(guild.roles.map(role => this.storeGuildRole(role)));
     }
 
+    async syncGuild(guild) {
+        // add guild to database
+        await this.addGuild(guild);
+
+        // make all basic permissions
+        await this.initializeGuildPermissions(guild);
+
+        // force update for all roles
+        await this.syncGuildRoles(guild);
+
+        // force update for all users
+        guild.members.forEach(async (member, id) => {
+            // skip bot users
+            if (member.user.bot) {
+                return;
+            }
+
+            // check that the user is added to the database
+            await this.addMember(member);
+            await this.syncMemberRoles(member);
+        });
+    }
+
+    async initializeGuildPermissions(guild) {
+        this.createPermission({
+            permissionId: "ADMIN",
+            guildid:      guild.id,
+            name:         "Admin",
+            comment:      "Admins can run any commands",
+        });
+        this.createPermission({
+            permissionId: "CREATE_PERMISSIONS",
+            guildid:      guild.id,
+            name:         "Create Permissions",
+            comment:      "Run !createPermissions",
+        });
+        this.createPermission({
+            permissionId: "GRANT_ROLE_PERMISSIONS",
+            guildid:      guild.id,
+            name:         "Grant Role Permissions",
+            comment:      "Run !grantRolePermissions",
+        });
+    }
+
     /**
      * Add a TMHI Discord role for the member to the database.
      * This should only be called after a role has been added via the Discord server.
