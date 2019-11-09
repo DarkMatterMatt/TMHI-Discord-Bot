@@ -10,6 +10,7 @@ CREATE TABLE guilds (
     verificationlevel   INT,
     createdtimestamp    BIGINT          COMMENT 'Milliseconds since Jan 1, 1970, 00:00:00.000 GMT',
     commandprefix       VARCHAR(32),
+    deletecommandmessage  BOOLEAN       DEFAULT 1,      COMMENT 'Delete command message after executing',
 
     PRIMARY KEY         (id)
 );
@@ -32,9 +33,9 @@ CREATE TABLE roles (
     id                  VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     guildid             VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     name                VARCHAR(255)    NOT NULL,
-    hexcolor            VARCHAR(8)      DEFAULT '',
-    discordpermissions  BIGINT          DEFAULT 0,
-    comment             VARCHAR(8192)   DEFAULT '',
+    hexcolor            VARCHAR(8)      NOT NULL,
+    discordpermissions  BIGINT          NOT NULL,
+    comment             VARCHAR(8192)   NOT NULL,
 
     FOREIGN KEY         (guildid)       REFERENCES  guilds(id),
     PRIMARY KEY         (id, guildid)
