@@ -1,3 +1,6 @@
+// imports
+const Setting = require("./Setting.js");
+
 /**
  * The CommandManager listens for, and acts on, user commands.
  */
@@ -79,7 +82,11 @@ module.exports = class CommandManager {
                         break;
                     }
 
-                    const [rows] = await this.tmhiDatabase.storeGuildPrefix(message.guild, newPrefix);
+                    const [rows] = await this.tmhiDatabase.storeGuildSetting(new Setting({
+                        id:    "COMMAND_PREFIX",
+                        guild: message.guild,
+                        value: newPrefix,
+                    }));
                     if (!rows.affectedRows) {
                         // database operation failed
                         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
