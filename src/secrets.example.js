@@ -1,3 +1,4 @@
+/** Configuration secrets, including login credentials */
 module.exports = {
     // database login credentials
     database: {

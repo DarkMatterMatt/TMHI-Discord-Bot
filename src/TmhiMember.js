@@ -3,9 +3,19 @@ const Collection = require("discord.js/src/util/Collection");
 const GuildMember = require("discord.js/src/structures/GuildMember");
 
 /**
- * Holds all the information about a single TMHI member.
- */
+ * Contains information about a single TMHI member
+ * @extends GuildMember
+*/
 module.exports = class TmhiMember extends GuildMember {
+    /**
+     * Create a new T-MHI member
+     * @param {GuildMember} guildMember The guild member to build on
+     * @param {Object} data T-MHI specific data
+     * @param {Collection<string, Permission>} data.tmhiPermissions The permissions for the member
+     * @param {string} [data.timezone] The primary active timezone of the member
+     * @param {number} [data.wikiId] The T-MHI wiki ID of the member
+     * @param {string} [data.email] The member's email address
+     */
     constructor(guildMember, {
         timezone        = "",
         tmhiPermissions = new Collection(),
@@ -28,7 +38,8 @@ module.exports = class TmhiMember extends GuildMember {
     }
 
     /**
-     * The primary timezone for this member, taking only roles into account.
+     * The primary active timezone of the member
+     * @type {string}
      */
     get timezone() {
         return this._timezone;
@@ -38,6 +49,10 @@ module.exports = class TmhiMember extends GuildMember {
         this._timezone = (timezone || "").toUpperCase();
     }
 
+    /**
+     * Check if the member has the specified permission
+     * @param {string} permissionId The ID of the permission to check
+     */
     hasPermission(permissionId) {
         // server owner and admins have all permissions
         if (this.tmhiPermissions.has("GOD_MODE") || this.tmhiPermissions.has("ADMIN")) {

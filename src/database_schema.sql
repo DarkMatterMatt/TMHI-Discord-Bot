@@ -1,3 +1,5 @@
+/** The database schema. Execute these commands to initialize the database */
+
 /* Main tables */
 
 CREATE TABLE settings (

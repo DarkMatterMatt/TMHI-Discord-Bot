@@ -30,14 +30,14 @@ client.on("ready", async () => {
         await tmhiDatabase.syncGuild(guild);
     });
 
-    /*
+    /**
      * Bot joined a new server.
      */
     client.on("guildCreate", async (guild) => {
         await tmhiDatabase.syncGuild(guild);
     });
 
-    /*
+    /**
      * New user has joined the server.
      */
     client.on("guildMemberAdd", async (member) => {
@@ -45,14 +45,14 @@ client.on("ready", async () => {
         await tmhiDatabase.addMember(member);
     });
 
-    /*
+    /**
      * Someone left the server.
      */
     client.on("guildMemberRemove", async (member) => {
         await tmhiDatabase.syncMemberRoles(member);
     });
 
-    /*
+    /**
      * The user has changed.
      */
     client.on("guildMemberUpdate", async (oldMember, newMember) => {

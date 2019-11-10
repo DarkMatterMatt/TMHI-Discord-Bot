@@ -1,7 +1,16 @@
-/**
- * A single permission for one or more users.
- */
+/**  A single setting for a guild */
 module.exports = class Setting {
+    /**
+     * Create a new T-MHI member
+     * @param {Object} data T-MHI specific data
+     * @param {string} data.id The setting ID
+     * @param {string} data.guild The guild that this setting applies to
+     * @param {number} data.defaultValue The default value of the setting
+     * @param {string} [data.name] The pretty name of the setting
+     * @param {string} [data.comment] An optional comment
+     * @param {string} [data.value] The value of the setting for the guild. Default if omitted
+     * @param {string} [data.guildComment] An optional guild specified comment for the setting
+     */
     constructor({
         id,
         name = "",
@@ -20,6 +29,7 @@ module.exports = class Setting {
         this.guildComment = guildComment;
     }
 
+    /** The value of the setting, or the default value if unspecified */
     get value() {
         if (this._value === "default") {
             return this.defaultValue;
@@ -36,6 +46,7 @@ module.exports = class Setting {
         this._value = value.toString().trim();
     }
 
+    /** An optional comment about this setting */
     get comment() {
         return this._comment || this.guildComment;
     }
@@ -44,14 +55,17 @@ module.exports = class Setting {
         this._comment = comment;
     }
 
+    /** Fetches the guild specific value, does not use the default value */
     get rawValue() {
         return this._value;
     }
 
+    /** The value, cast to a number */
     get numberValue() {
         return parseFloat(this.value);
     }
 
+    /** The value, converted to a boolean */
     get boolValue() {
         if ([0, false, null].includes(this.value)) {
             return false;
@@ -59,6 +73,7 @@ module.exports = class Setting {
         return !["0", "false", "off", "no", "n"].includes(this.value.toLowerCase());
     }
 
+    /** Alias for boolValue */
     get enabled() {
         return this.boolValue;
     }

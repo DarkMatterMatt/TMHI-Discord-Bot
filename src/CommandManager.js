@@ -1,12 +1,18 @@
-/**
- * The CommandManager listens for, and acts on, user commands.
- */
+/** Listens for, and acts on, user commands */
 module.exports = class CommandManager {
+    /**
+     * Create a new command manager
+     * @param {Client} client The client to catch events from
+     * @param {tmhiDatabase} tmhiDatabase The T-MHI database interface
+     */
     constructor(client, tmhiDatabase) {
         this.client       = client;
         this.tmhiDatabase = tmhiDatabase;
     }
 
+    /**
+     * Start listening for commands
+     */
     startListening() {
         this.client.on("message", async (message) => {
             // ignore messages from bots
@@ -47,21 +53,25 @@ module.exports = class CommandManager {
 
             // process command
             switch (command.toLowerCase()) {
-                /*
-                 * Replies with the current version of the bot.
+                /**
+                 * Replies with the current version of the bot
                  */
                 case "version": {
                     message.reply(`TMHI Discord Bot v${process.env.npm_package_version}`);
                     break;
                 }
 
-                /*
+                /**
                  * Who knows what this command might do?
                  */
                 case "test": {
                     break;
                 }
 
+                /**
+                 * Choose whether to delete the command message after execution
+                 * @param {('true'|'false'|'default')} newValue The new setting value
+                 */
                 case "setdeletecommand":
                 case "setdeletecommandmessage": {
                     if (args.length !== 1) {
@@ -96,6 +106,10 @@ module.exports = class CommandManager {
                     break;
                 }
 
+                /**
+                 * Set the command prefix
+                 * @param {string} newPrefix The new command prefix
+                 */
                 case "setprefix":
                 case "setcommandprefix": {
                     if (args.length !== 1) {
@@ -128,10 +142,9 @@ module.exports = class CommandManager {
                     break;
                 }
 
-                /*
-                 * Load the users permissions
-                 *
-                 * @param  [discordId]  Optional discordId to fetch. If omitted, fetches own permissions.
+                /**
+                 * Load a member's permissions
+                 * @param {string} [discordId] Optional @.member to fetch. If omitted, fetch own permissions
                  */
                 case "permissions":
                 case "getpermissions": {
@@ -177,6 +190,12 @@ module.exports = class CommandManager {
                     break;
                 }
 
+                /**
+                 * Create a new permission which can be granted to Discord roles
+                 * @param {string} roleId The new role ID
+                 * @param {string} name A pretty name for the permission
+                 * @param {string} description The permission's description
+                 */
                 case "createpermission":
                 case "createpermissiontype": {
                     if (args.length !== 3) {
@@ -208,6 +227,12 @@ module.exports = class CommandManager {
                     break;
                 }
 
+                /**
+                 * Grant a permission to a role
+                 * @param {string} roleId @.role to grant the permissions to
+                 * @param {string} permissionId The ID of the permission to grant
+                 * @param {string} [comment] An optional comment to accompany the database entry
+                 */
                 case "grantrolepermission": {
                     if (args.length !== 2 && args.length !== 3) {
                         // incorrect number of arguments
@@ -253,11 +278,12 @@ module.exports = class CommandManager {
                     break;
                 }
 
-                /*
-                 * Invalid command. Sends a direct message to the user with the help text.
+                /**
+                 * Invalid command, send a direct message to the member with the help text
+                 * @todo Implement this command
                  */
                 default: {
-                    // TODO: direct message the user with the help text
+                    break;
                 }
             }
             // delete command message if setting enabled
