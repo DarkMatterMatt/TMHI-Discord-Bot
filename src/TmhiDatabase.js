@@ -18,7 +18,7 @@ module.exports = class TmhiDatabase {
     async storeGuildSettings(settings) {
         const queries = await Promise.all(settings.map(async (setting) => {
             // delete guildsetting entry if using default values
-            if (setting.rawValue === undefined || setting.rawValue === null) {
+            if (setting.rawValue === undefined || setting.rawValue === null || setting.rawValue === "default") {
                 return this.pool.query(`
                     DELETE FROM guildsettings
                     WHERE guildid=:guildId AND settingid=:settingId
