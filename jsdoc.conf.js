@@ -13,6 +13,9 @@ module.exports = {
         allowUnknownTags: true,
         dictionaries: ["jsdoc", "closure"],
     },
+    opts: {
+        template: "node_modules/better-docs",
+    },
     templates: {
         cleverLinks:    false,
         monospaceLinks: false,
