@@ -1,6 +1,3 @@
-// imports
-const Setting = require("./Setting.js");
-
 /**
  * The CommandManager listens for, and acts on, user commands.
  */
@@ -65,6 +62,41 @@ module.exports = class CommandManager {
                     break;
                 }
 
+                case "setdeletecommand":
+                case "setdeletecommandmessage": {
+                    if (args.length !== 1) {
+                        // incorrect number of arguments
+                        message.reply(`Invalid syntax. Syntax is: \`${prefix}setDeleteCommandMessage`
+                            + "true|false|default`");
+                        break;
+                    }
+
+                    const newValue = args[0] === "null" ? null : args[0];
+                    console.log(newValue);
+                    const author = await this.tmhiDatabase.loadTmhiMember(message.member);
+
+                    if (!author.hasPermission("ADMIN")) {
+                        // missing permissions
+                        message.reply("You must be an admin to edit bot settings");
+                        break;
+                    }
+
+                    const setting = settings.get("DELETE_COMMAND_MESSAGE");
+                    setting.value = newValue;
+
+                    const [rows] = await this.tmhiDatabase.storeGuildSetting(setting);
+                    if (!rows.affectedRows) {
+                        // database operation failed
+                        message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
+                        break;
+                    }
+
+                    // successful database update
+                    message.reply(`Command messages will ${setting.boolValue ? "" : "not "}`
+                        + "be deleted after processing");
+                    break;
+                }
+
                 case "setprefix":
                 case "setcommandprefix": {
                     if (args.length !== 1) {
@@ -82,11 +114,10 @@ module.exports = class CommandManager {
                         break;
                     }
 
-                    const [rows] = await this.tmhiDatabase.storeGuildSetting(new Setting({
-                        id:    "COMMAND_PREFIX",
-                        guild: message.guild,
-                        value: newPrefix,
-                    }));
+                    const setting = settings.get("COMMAND_PREFIX");
+                    setting.value = newPrefix;
+
+                    const [rows] = await this.tmhiDatabase.storeGuildSetting(setting);
                     if (!rows.affectedRows) {
                         // database operation failed
                         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
