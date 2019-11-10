@@ -1,7 +1,10 @@
 /* eslint-disable */
 
 module.exports = {
-    plugins: ["plugins/markdown"],
+    plugins: [
+        "plugins/markdown",
+        "node_modules/better-docs/category",
+    ],
     recurseDepth: 10,
     source: {
         include: ["README.md", "src", "jsdocExternals.js"],

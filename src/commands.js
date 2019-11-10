@@ -8,6 +8,8 @@ const commands = {};
 
 /**
  * Send help in a direct message
+ * @category Commands
+ * @module help
  * @todo Implement this command
  */
 commands.help = async ({ message }) => {
@@ -16,6 +18,8 @@ commands.help = async ({ message }) => {
 
 /**
  * Replies with the current version of the bot
+ * @category Commands
+ * @module version
  */
 commands.version = async ({ tmhiDatabase, message, args, settings, prefix }) => {
     message.reply(`TMHI Discord Bot v${process.env.npm_package_version}`);
@@ -23,6 +27,8 @@ commands.version = async ({ tmhiDatabase, message, args, settings, prefix }) => 
 
 /**
  * Choose whether to delete the command message after execution
+ * @category Commands
+ * @module setDeleteCommandMessage
  * @param {('true'|'false'|'default')} newValue The new setting value
  */
 commands.setDeleteCommandMessage = async ({ tmhiDatabase, message, args, settings, prefix }) => {
@@ -63,6 +69,8 @@ commands.setDeleteCommand = commands.setDeleteCommandMessage;
 
 /**
  * Set the command prefix
+ * @category Commands
+ * @module setCommandPrefix
  * @param {string} newPrefix The new command prefix
  */
 commands.setCommandPrefix = async ({ tmhiDatabase, message, args, settings, prefix }) => {
@@ -98,6 +106,8 @@ commands.setPrefix = commands.setCommandPrefix;
 
 /**
  * Load a member's permissions
+ * @category Commands
+ * @module getPermissions
  * @param {string} [discordId] Optional @.member to fetch. If omitted, fetch own permissions
  */
 commands.getPermissions = async ({ tmhiDatabase, message, args, settings, prefix }) => {
@@ -145,6 +155,8 @@ commands.permissions = commands.getPermissions;
 
 /**
  * Create a new permission which can be granted to Discord roles
+ * @category Commands
+ * @module createPermission
  * @param {string} roleId The new role ID
  * @param {string} name A pretty name for the permission
  * @param {string} description The permission's description
@@ -187,6 +199,8 @@ commands.createPermission = async ({ tmhiDatabase, message, args, settings, pref
 
 /**
  * Grant a permission to a role
+ * @category Commands
+ * @module grantRolePermission
  * @param {string} roleId @.role to grant the permissions to
  * @param {string} permissionId The ID of the permission to grant
  * @param {string} [comment] An optional comment to accompany the database entry
@@ -241,6 +255,8 @@ commands.grantRolePermission = async ({ tmhiDatabase, message, args, settings, p
 
 /**
  * Invalid command, send a direct message to the member with the help text
+ * @category Commands
+ * @module invalidCommand
  */
 commands.invalidCommand = commands.help;
 
