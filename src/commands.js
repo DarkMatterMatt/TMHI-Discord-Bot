@@ -1,5 +1,8 @@
 /* eslint-disable object-curly-newline */
 
+// imports
+const Permission = require("./Permission.js");
+
 // commands
 const commands = {};
 
@@ -50,6 +53,11 @@ commands.setDeleteCommandMessage = async ({ tmhiDatabase, message, args, setting
 
     // successful database update
     message.reply(`Command messages will ${setting.boolValue ? "" : "not "}be deleted after processing`);
+
+    if (setting.boolValue) {
+        // delete the command
+        message.delete();
+    }
 };
 commands.setDeleteCommand = commands.setDeleteCommandMessage;
 
@@ -157,7 +165,15 @@ commands.createPermission = async ({ tmhiDatabase, message, args, settings, pref
         return;
     }
 
-    const [rows] = await tmhiDatabase.createPermissionType(args[0], args[1], args[2]);
+    const [id, name, comment] = args;
+    const permission = new Permission({
+        id,
+        name,
+        comment,
+        guild: message.guild,
+    });
+
+    const [rows] = await tmhiDatabase.createPermission(permission);
 
     if (!rows.affectedRows) {
         // database operation failed
@@ -166,7 +182,7 @@ commands.createPermission = async ({ tmhiDatabase, message, args, settings, pref
     }
 
     // successful database update
-    message.reply(`Created permission: ${args[0]}`);
+    message.reply(`Created permission: ${id}`);
 };
 
 /**
@@ -194,19 +210,24 @@ commands.grantRolePermission = async ({ tmhiDatabase, message, args, settings, p
         return;
     }
 
-    if (!message.guild.roles.has(roleId)) {
+    const role = message.guild.roles.get(roleId);
+    if (role === undefined) {
         // role doesn't exist
         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
         return;
     }
 
-    if (!await tmhiDatabase.permissionExists(permissionId)) {
+    const permission = new Permission({
+        id:    permissionId,
+        guild: message.guild,
+    });
+    if (!await tmhiDatabase.permissionExists(permission)) {
         // permission doesn't exist
         message.reply(`That permission doesn't exist. You need to create it using \`${prefix}createPermission\``);
         return;
     }
 
-    const [rows] = await tmhiDatabase.grantRolePermission(roleId, permissionId, comment);
+    const [rows] = await tmhiDatabase.grantRolePermission(role, permission, comment);
 
     if (rows.affectedRows === 0) {
         // database operation failed
