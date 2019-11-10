@@ -63,8 +63,8 @@ class TmhiDatabase {
         const settings = new Collection();
         settings.set(setting.id, setting);
 
-        const queries = await this.storeGuildSettings(settings);
-        return queries[0];
+        const [query] = await this.storeGuildSettings(settings);
+        return query;
     }
 
     /**
