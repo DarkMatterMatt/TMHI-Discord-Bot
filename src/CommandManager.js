@@ -72,7 +72,6 @@ module.exports = class CommandManager {
                     }
 
                     const newValue = args[0] === "null" ? null : args[0];
-                    console.log(newValue);
                     const author = await this.tmhiDatabase.loadTmhiMember(message.member);
 
                     if (!author.hasPermission("ADMIN")) {
