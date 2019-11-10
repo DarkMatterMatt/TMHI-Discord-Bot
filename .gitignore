@@ -1,5 +1,6 @@
 # bot tokens, database passwords, etc.
 secrets.js
+out/
 
 # Logs
 logs

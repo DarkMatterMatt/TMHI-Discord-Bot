@@ -1,7 +1,7 @@
 /**  A single setting for a guild */
 class Setting {
     /**
-     * Create a new T-MHI member
+     * Create a single setting for a guild
      * @param {Object} data T-MHI specific data
      * @param {string} data.id The setting ID
      * @param {string} data.guild The guild that this setting applies to

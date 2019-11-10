@@ -1,10 +1,16 @@
-/**
- * A single permission for one or more users.
- */
+/** A single permission for one or more users from a single guild */
 class Permission {
+    /**
+     * Create a single permission for one or more users from a single guild
+     * @param {Object} data The permission data
+     * @param {string} data.id The permission ID
+     * @param {string} data.guild The guild that this permission applies to
+     * @param {string} [data.name] The pretty name of the permission
+     * @param {string} [data.comment] An optional comment
+     */
     constructor({
         id,
-        name = null,
+        name = "",
         comment = "",
         guild,
     } = {}) {
