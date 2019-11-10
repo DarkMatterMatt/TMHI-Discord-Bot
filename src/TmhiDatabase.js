@@ -6,15 +6,22 @@ const TmhiMember = require("./TmhiMember.js");
 const Permission = require("./Permission.js");
 const Setting    = require("./Setting.js");
 
-/**
- * Holds contains TMHI database related methods
- */
+/** T-MHI database interface */
 module.exports = class TmhiDatabase {
+    /**
+     * Initialize a T-MHI database interface instance
+     * @param {Object} createPoolOptions Options to pass through to mysql2.createPool
+     */
     constructor(createPoolOptions) {
         this.pool = mysql.createPool(createPoolOptions);
         this.pool.pool.config.connectionConfig.namedPlaceholders = true;
     }
 
+    /**
+     * Store guild settings
+     * @param {Collection<string, Setting>} settings A Collection of Settings to store
+     * @returns {Object[]} An array of database query results
+     */
     async storeGuildSettings(settings) {
         const queries = await Promise.all(settings.map(async (setting) => {
             // delete guildsetting entry if using default values
@@ -47,6 +54,11 @@ module.exports = class TmhiDatabase {
         return queries;
     }
 
+    /**
+     * Store a single guild setting
+     * @param {Setting} setting A Setting to store
+     * @returns {Object} A database query result
+     */
     async storeGuildSetting(setting) {
         const settings = new Collection();
         settings.set(setting.id, setting);
@@ -55,6 +67,11 @@ module.exports = class TmhiDatabase {
         return queries[0];
     }
 
+    /**
+     * Load guild settings from the database
+     * @param {Guild} guild The guild to fetch the Settings for
+     * @returns {Collection<string, Setting>} A Collection of the guild's Settings
+     */
     async loadGuildSettings(guild) {
         // settings for guild
         const settings = new Collection();
@@ -92,10 +109,10 @@ module.exports = class TmhiDatabase {
         return settings;
     }
 
-    /*
-     * Add a Discord guild to the database.
-     *
-     * @param  guild  The guild to add.
+    /**
+     * Store a guild
+     * @param {Guild} guild The guild to store
+     * @returns {Object} A query result
      */
     async addGuild(guild) {
         return this.pool.query(`
@@ -106,10 +123,10 @@ module.exports = class TmhiDatabase {
         ;`, guild);
     }
 
-    /*
-     * Add a Discord user to the database.
-     *
-     * @param  guildMember  The member to add.
+    /**
+     * Store a guild member
+     * @param {GuildMember|TmhiMember} guildMember The member to add
+     * @returns {Object} A query result
      */
     async addMember(guildMember) {
         return this.pool.query(`
@@ -123,11 +140,10 @@ module.exports = class TmhiDatabase {
         });
     }
 
-    /*
-    * Retrieve a Discord user from the database.
-    *
-    * @param    guildMember  The guild member to load from the database.
-    * @returns  A TmhiMember object.
+    /**
+    * Retrieve a T-MHI member from the database
+    * @param {GuildMember|TmhiMember} guildMember The guild member to load from the database
+    * @returns {TmhiMember} The T-MHI member
     */
     async loadTmhiMember(guildMember) {
         let rows;
@@ -205,8 +221,10 @@ module.exports = class TmhiDatabase {
     }
 
     /**
-     * Add a guild role to the database.
-     * This should only be called after a role has been added via the Discord server.
+     * Store a guild role in the database
+     * @param {Role} role The role to store
+     * @param {string} [comment] An optional comment to accompany the database entry
+     * @returns {Object} A query result
      */
     async storeGuildRole(role, comment = null) {
         return this.pool.query(`
@@ -226,8 +244,10 @@ module.exports = class TmhiDatabase {
     }
 
     /**
-     * Deletes guild roles that are NOT in the list of roles provided.
-     * This should only be called when syncing guild roles.
+     * Delete guild roles that are NOT in the list of roles provided
+     * @param {Guild} guild The guild to delete the roles from
+     * @param {Collection<Snowflake, Role>} roles The roles to keep
+     * @returns {Object} A query result
      */
     async deleteGuildRolesExcluding(guild, roles) {
         return this.pool.query(`
@@ -236,6 +256,11 @@ module.exports = class TmhiDatabase {
         `, [guild.id, ...roles.map(r => r.id)]);
     }
 
+    /**
+     * Synchronize guild roles
+     * @param {Guild} guild The guild to synchronize
+     * @returns {Object[]} An array of query results
+     */
     async syncGuildRoles(guild) {
         // remove roles that no longer exist
         await this.deleteGuildRolesExcluding(guild, guild.roles);
@@ -244,6 +269,10 @@ module.exports = class TmhiDatabase {
         return Promise.all(guild.roles.map(role => this.storeGuildRole(role)));
     }
 
+    /**
+     * Synchronize guild roles and members
+     * @param {Guild} guild The guild to synchronize
+     */
     async syncGuild(guild) {
         // add guild to database
         await this.addGuild(guild);
@@ -267,6 +296,10 @@ module.exports = class TmhiDatabase {
         });
     }
 
+    /**
+     * Initialize basic permissions
+     * @param {Guild} guild The guild to initialize permissions for
+     */
     async initializeGuildPermissions(guild) {
         this.createPermission({
             id:      "ADMIN",
@@ -290,7 +323,10 @@ module.exports = class TmhiDatabase {
 
     /**
      * Add a TMHI Discord role for the member to the database.
-     * This should only be called after a role has been added via the Discord server.
+     * @param {GuildMember|TmhiMember} member The member with the role
+     * @param {Role} role The role to store
+     * @param {string} [comment] An optional comment to accompany the database entry
+     * @returns {Object} A query result
      */
     async storeMemberRole(member, role, comment = null) {
         return this.pool.query(`
@@ -307,8 +343,10 @@ module.exports = class TmhiDatabase {
     }
 
     /**
-     * Deletes all roles for the member that are NOT in the list of roles provided.
-     * This should only be called when syncing roles.
+     * Delete a member's roles that are NOT in the list of roles provided
+     * @param {GuildMember|TmhiMember} member The member to delete the roles from
+     * @param {Collection<Snowflake, Role>} roles The roles to keep
+     * @returns {Object} A query result
      */
     async deleteMemberRolesExcluding(member, roles) {
         return this.pool.query(`
@@ -317,6 +355,11 @@ module.exports = class TmhiDatabase {
         `, [member.id, member.guild.id, ...roles.map(r => r.id)]);
     }
 
+    /**
+     * Synchronize a member's roles
+     * @param {GuildMember|TmhiMember} member The member to synchronize
+     * @returns {Object[]} An array of query results
+     */
     async syncMemberRoles(member) {
         // remove roles that the user no longer has
         await this.deleteMemberRolesExcluding(member, member.roles);
@@ -326,7 +369,11 @@ module.exports = class TmhiDatabase {
     }
 
     /**
-     * Grants a permission to a TMHI Discord role in the database.
+     * Grant a permission to a Discord role
+     * @param {Role} role The role to grant the permission to
+     * @param {Permission} permission The permission to grant
+     * @param {string} [comment] An optional comment to accompany the database entry
+     * @returns {Object} A query result
      */
     async grantRolePermission(role, permission, comment = null) {
         if (role.guild.id !== permission.guild.id) {
@@ -347,7 +394,9 @@ module.exports = class TmhiDatabase {
     }
 
     /**
-     * Creates a new permission type in the database.
+     * Store a new permission
+     * @param {Permission} permission The Permission to store
+     * @returns {Object} A query result
      */
     async createPermission(permission) {
         return this.pool.query(`
@@ -364,7 +413,9 @@ module.exports = class TmhiDatabase {
     }
 
     /**
-     * Check if a permission exists in the database.
+     * Check if a permission exists
+     * @param {Permission} permission The permission to check the existance of
+     * @returns {boolean} True if the permission exists
      */
     async permissionExists(permission) {
         const [rows] = await this.pool.query(`
