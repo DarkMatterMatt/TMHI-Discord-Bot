@@ -21,11 +21,19 @@ module.exports = class Setting {
     }
 
     get value() {
+        if (this._value === "default") {
+            return this.defaultValue;
+        }
         return this._value || this.defaultValue;
     }
 
     set value(value) {
-        this._value = value;
+        // convert value to string if possible
+        if (value === null) {
+            this._value = value;
+            return;
+        }
+        this._value = value.toString().trim();
     }
 
     get comment() {
@@ -45,7 +53,10 @@ module.exports = class Setting {
     }
 
     get boolValue() {
-        return ![0, false, null, "0", "false", "off"].includes(this.value);
+        if ([0, false, null].includes(this.value)) {
+            return false;
+        }
+        return !["0", "false", "off", "no", "n"].includes(this.value.toLowerCase());
     }
 
     get enabled() {
