@@ -2,7 +2,7 @@
 class CommandManager {
     /**
      * Create a new command manager
-     * @param {Client} client The client to catch events from
+     * @param {external:Client} client The client to catch events from
      * @param {tmhiDatabase} tmhiDatabase The T-MHI database interface
      */
     constructor(client, tmhiDatabase) {

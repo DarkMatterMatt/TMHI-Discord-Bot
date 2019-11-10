@@ -19,7 +19,7 @@ class TmhiDatabase {
 
     /**
      * Store guild settings
-     * @param {Collection<string, Setting>} settings A Collection of Settings to store
+     * @param {external:Collection<string, Setting>} settings A Collection of Settings to store
      * @returns {Object[]} An array of database query results
      */
     async storeGuildSettings(settings) {
@@ -69,8 +69,8 @@ class TmhiDatabase {
 
     /**
      * Load guild settings from the database
-     * @param {Guild} guild The guild to fetch the Settings for
-     * @returns {Collection<string, Setting>} A Collection of the guild's Settings
+     * @param {external:Guild} guild The guild to fetch the Settings for
+     * @returns {external:Collection<string, Setting>} A Collection of the guild's Settings
      */
     async loadGuildSettings(guild) {
         // settings for guild
@@ -111,7 +111,7 @@ class TmhiDatabase {
 
     /**
      * Store a guild
-     * @param {Guild} guild The guild to store
+     * @param {external:Guild} guild The guild to store
      * @returns {Object} A query result
      */
     async addGuild(guild) {
@@ -125,7 +125,7 @@ class TmhiDatabase {
 
     /**
      * Store a guild member
-     * @param {GuildMember|TmhiMember} guildMember The member to add
+     * @param {external:GuildMember|TmhiMember} guildMember The member to add
      * @returns {Object} A query result
      */
     async addMember(guildMember) {
@@ -142,7 +142,7 @@ class TmhiDatabase {
 
     /**
     * Retrieve a T-MHI member from the database
-    * @param {GuildMember|TmhiMember} guildMember The guild member to load from the database
+    * @param {external:GuildMember|TmhiMember} guildMember The guild member to load from the database
     * @returns {TmhiMember} The T-MHI member
     */
     async loadTmhiMember(guildMember) {
@@ -222,7 +222,7 @@ class TmhiDatabase {
 
     /**
      * Store a guild role in the database
-     * @param {Role} role The role to store
+     * @param {external:Role} role The role to store
      * @param {string} [comment] An optional comment to accompany the database entry
      * @returns {Object} A query result
      */
@@ -245,8 +245,8 @@ class TmhiDatabase {
 
     /**
      * Delete guild roles that are NOT in the list of roles provided
-     * @param {Guild} guild The guild to delete the roles from
-     * @param {Collection<Snowflake, Role>} roles The roles to keep
+     * @param {external:Guild} guild The guild to delete the roles from
+     * @param {external:Collection<Snowflake, Role>} roles The roles to keep
      * @returns {Object} A query result
      */
     async deleteGuildRolesExcluding(guild, roles) {
@@ -258,7 +258,7 @@ class TmhiDatabase {
 
     /**
      * Synchronize guild roles
-     * @param {Guild} guild The guild to synchronize
+     * @param {external:Guild} guild The guild to synchronize
      * @returns {Object[]} An array of query results
      */
     async syncGuildRoles(guild) {
@@ -271,7 +271,7 @@ class TmhiDatabase {
 
     /**
      * Synchronize guild roles and members
-     * @param {Guild} guild The guild to synchronize
+     * @param {external:Guild} guild The guild to synchronize
      */
     async syncGuild(guild) {
         // add guild to database
@@ -298,7 +298,7 @@ class TmhiDatabase {
 
     /**
      * Initialize basic permissions
-     * @param {Guild} guild The guild to initialize permissions for
+     * @param {external:Guild} guild The guild to initialize permissions for
      */
     async initializeGuildPermissions(guild) {
         this.createPermission({
@@ -323,8 +323,8 @@ class TmhiDatabase {
 
     /**
      * Add a TMHI Discord role for the member to the database.
-     * @param {GuildMember|TmhiMember} member The member with the role
-     * @param {Role} role The role to store
+     * @param {external:GuildMember|TmhiMember} member The member with the role
+     * @param {external:Role} role The role to store
      * @param {string} [comment] An optional comment to accompany the database entry
      * @returns {Object} A query result
      */
@@ -344,8 +344,8 @@ class TmhiDatabase {
 
     /**
      * Delete a member's roles that are NOT in the list of roles provided
-     * @param {GuildMember|TmhiMember} member The member to delete the roles from
-     * @param {Collection<Snowflake, Role>} roles The roles to keep
+     * @param {external:GuildMember|TmhiMember} member The member to delete the roles from
+     * @param {external:Collection<Snowflake, external:Role>} roles The roles to keep
      * @returns {Object} A query result
      */
     async deleteMemberRolesExcluding(member, roles) {
@@ -357,7 +357,7 @@ class TmhiDatabase {
 
     /**
      * Synchronize a member's roles
-     * @param {GuildMember|TmhiMember} member The member to synchronize
+     * @param {external:GuildMember|TmhiMember} member The member to synchronize
      * @returns {Object[]} An array of query results
      */
     async syncMemberRoles(member) {
@@ -370,7 +370,7 @@ class TmhiDatabase {
 
     /**
      * Grant a permission to a Discord role
-     * @param {Role} role The role to grant the permission to
+     * @param {external:Role} role The role to grant the permission to
      * @param {Permission} permission The permission to grant
      * @param {string} [comment] An optional comment to accompany the database entry
      * @returns {Object} A query result
