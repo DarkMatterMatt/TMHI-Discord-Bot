@@ -6,7 +6,7 @@ const GuildMember = require("discord.js/src/structures/GuildMember");
  * Contains information about a single TMHI member
  * @extends GuildMember
 */
-module.exports = class TmhiMember extends GuildMember {
+class TmhiMember extends GuildMember {
     /**
      * Create a new T-MHI member
      * @param {GuildMember} guildMember The guild member to build on
@@ -60,4 +60,6 @@ module.exports = class TmhiMember extends GuildMember {
         }
         return this.tmhiPermissions.has(permissionId);
     }
-};
+}
+
+module.exports = TmhiMember;

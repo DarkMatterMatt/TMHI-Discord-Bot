@@ -1,7 +1,7 @@
 /**
  * A single permission for one or more users.
  */
-module.exports = class Permission {
+class Permission {
     constructor({
         id,
         name = null,
@@ -13,4 +13,6 @@ module.exports = class Permission {
         this.comment = comment;
         this.guild   = guild;
     }
-};
+}
+
+module.exports = Permission;

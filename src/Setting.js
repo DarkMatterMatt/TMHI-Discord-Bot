@@ -1,5 +1,5 @@
 /**  A single setting for a guild */
-module.exports = class Setting {
+class Setting {
     /**
      * Create a new T-MHI member
      * @param {Object} data T-MHI specific data
@@ -77,4 +77,6 @@ module.exports = class Setting {
     get enabled() {
         return this.boolValue;
     }
-};
+}
+
+module.exports = Setting;

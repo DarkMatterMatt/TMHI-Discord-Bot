@@ -1,5 +1,5 @@
 /** Listens for, and acts on, user commands */
-module.exports = class CommandManager {
+class CommandManager {
     /**
      * Create a new command manager
      * @param {Client} client The client to catch events from
@@ -292,4 +292,6 @@ module.exports = class CommandManager {
             }
         });
     }
-};
+}
+
+module.exports = CommandManager;

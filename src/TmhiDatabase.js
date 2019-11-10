@@ -7,7 +7,7 @@ const Permission = require("./Permission.js");
 const Setting    = require("./Setting.js");
 
 /** T-MHI database interface */
-module.exports = class TmhiDatabase {
+class TmhiDatabase {
     /**
      * Initialize a T-MHI database interface instance
      * @param {Object} createPoolOptions Options to pass through to mysql2.createPool
@@ -428,4 +428,6 @@ module.exports = class TmhiDatabase {
 
         return rows.length !== 0;
     }
-};
+}
+
+module.exports = TmhiDatabase;
