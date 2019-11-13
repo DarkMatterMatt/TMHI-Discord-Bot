@@ -57,7 +57,7 @@ CREATE TABLE permissions (
     comment         VARCHAR(8192)   DEFAULT '',
     
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
-    PRIMARY KEY     (id)
+    PRIMARY KEY     (id, guildid)
 );
 
 /* Linking tables */
