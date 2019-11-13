@@ -27,3 +27,9 @@
  * @external Role
  * @see {@link https://discord.js.org/#/docs/main/stable/class/Role Role}
  */
+
+/**
+ * discord.js Snowflake. A Twitter snowflake, except the epoch is 2015-01-01T00:00:00.000Z
+ * @external Snowflake
+ * @see {@link https://discord.js.org/#/docs/main/stable/typedef/Snowflake Snowflake}
+ */

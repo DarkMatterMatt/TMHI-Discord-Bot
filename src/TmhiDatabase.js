@@ -68,7 +68,7 @@ class TmhiDatabase {
     }
 
     /**
-     * Load guild settings from the database
+     * Load guild settings
      * @param {external:Guild} guild The guild to fetch the Settings for
      * @returns {external:Collection<string, Setting>} A Collection of the guild's Settings
      */
@@ -141,8 +141,8 @@ class TmhiDatabase {
     }
 
     /**
-    * Retrieve a T-MHI member from the database
-    * @param {external:GuildMember|TmhiMember} guildMember The guild member to load from the database
+    * Retrieve a T-MHI member
+    * @param {external:GuildMember|TmhiMember} guildMember The guild member to load
     * @returns {TmhiMember} The T-MHI member
     */
     async loadTmhiMember(guildMember) {
@@ -221,7 +221,7 @@ class TmhiDatabase {
     }
 
     /**
-     * Store a guild role in the database
+     * Store a guild role
      * @param {external:Role} role The role to store
      * @param {string} [comment] An optional comment to accompany the database entry
      * @returns {Object} A query result
@@ -246,7 +246,7 @@ class TmhiDatabase {
     /**
      * Delete guild roles that are NOT in the list of roles provided
      * @param {external:Guild} guild The guild to delete the roles from
-     * @param {external:Collection<Snowflake, Role>} roles The roles to keep
+     * @param {external:Collection<external:Snowflake, Role>} roles The roles to keep
      * @returns {Object} A query result
      */
     async deleteGuildRolesExcluding(guild, roles) {
@@ -322,7 +322,7 @@ class TmhiDatabase {
     }
 
     /**
-     * Add a TMHI Discord role for the member to the database.
+     * Add a TMHI Discord role for the member
      * @param {external:GuildMember|TmhiMember} member The member with the role
      * @param {external:Role} role The role to store
      * @param {string} [comment] An optional comment to accompany the database entry
@@ -345,7 +345,7 @@ class TmhiDatabase {
     /**
      * Delete a member's roles that are NOT in the list of roles provided
      * @param {external:GuildMember|TmhiMember} member The member to delete the roles from
-     * @param {external:Collection<Snowflake, external:Role>} roles The roles to keep
+     * @param {external:Collection<external:Snowflake, external:Role>} roles The roles to keep
      * @returns {Object} A query result
      */
     async deleteMemberRolesExcluding(member, roles) {
