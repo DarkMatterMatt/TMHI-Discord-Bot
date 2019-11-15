@@ -292,7 +292,7 @@ class TmhiDatabase {
         await this.syncGuildRoles(guild);
 
         // force update for all users
-        guild.members.forEach(async (member, id) => {
+        guild.members.forEach(async (member) => {
             // skip bot users
             if (member.user.bot) {
                 return;

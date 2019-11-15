@@ -100,7 +100,7 @@ addCommand({
  * @category Commands
  * @module version
  */
-async function version({ tmhiDatabase, message, args, settings, prefix }) {
+async function version({ message }) {
     message.reply(`TMHI Discord Bot v${process.env.npm_package_version}`);
 }
 addCommand({
@@ -204,7 +204,7 @@ addCommandAlias("setCommandPrefix", "setPrefix");
  * @module getPermissions
  * @param {string} [discordId] Optional @.member to fetch. If omitted, fetch own permissions
  */
-async function getPermissions({ tmhiDatabase, message, args, settings, prefix }) {
+async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     if (args.length !== 0 && args.length !== 1) {
         // more than one argument
         message.reply(`Invalid syntax. Syntax is: \`${prefix}permissions [optional @someone]\``);
@@ -260,7 +260,7 @@ addCommandAlias("getPermissions", "permissions");
  * @param {string} name A pretty name for the permission
  * @param {string} description The permission's description
  */
-async function createPermission({ tmhiDatabase, message, args, settings, prefix }) {
+async function createPermission({ tmhiDatabase, message, args, prefix }) {
     if (args.length !== 3) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}createPermission `
@@ -309,7 +309,7 @@ addCommand({
  * @param {string} permissionId The ID of the permission to grant
  * @param {string} [comment] An optional comment to accompany the database entry
  */
-async function grantRolePermission({ tmhiDatabase, message, args, settings, prefix }) {
+async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     if (args.length !== 2 && args.length !== 3) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}grantRolePermission `
@@ -367,7 +367,7 @@ addCommand({
  * @category Commands
  * @module createPoll
  */
-async function createPoll({ tmhiDatabase, message, args, settings, prefix }) {
+async function createPoll({ tmhiDatabase, message, args }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (!author.hasPermission("CREATE_POLLS")) {
         message.reply("Sorry, to create a poll you need the CREATE_POLLS permission");

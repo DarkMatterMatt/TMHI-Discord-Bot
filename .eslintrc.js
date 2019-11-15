@@ -38,9 +38,7 @@ module.exports = {
         "no-console": "off",
         "no-multi-spaces": "off",
         "no-underscore-dangle": "off",
-        "no-unused-vars": ["warn", {
-            "args": "none",
-        }],
+        "no-unused-vars": ["warn"],
         "no-restricted-syntax": "off",
         "quotes": ["error", "double"],
     },
