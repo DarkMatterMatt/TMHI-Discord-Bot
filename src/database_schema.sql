@@ -121,4 +121,5 @@ CREATE TABLE memberpermissions (
 
 /* Settings */
 INSERT INTO settings (id, name, defaultvalue)          VALUES ('COMMAND_PREFIX',         'Command Prefix',         '!');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE', 'Delete Command Message', '1', 'Delete command message after executing');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE', 'Delete Command Message', '0', 'Delete command message after executing');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('BOT_OWNER_GOD_MODE',     'Bot Owner has God Mode', '0', 'Bot owner has full (admin) privileges');

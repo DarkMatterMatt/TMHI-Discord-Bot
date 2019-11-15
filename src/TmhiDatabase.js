@@ -5,6 +5,7 @@ const Collection = require("discord.js/src/util/Collection");
 const TmhiMember = require("./TmhiMember.js");
 const Permission = require("./Permission.js");
 const Setting    = require("./Setting.js");
+const secrets    = require("./secrets.js");
 
 /** T-MHI database interface */
 class TmhiDatabase {
@@ -202,14 +203,21 @@ class TmhiDatabase {
             }));
         });
 
-        // owner has GOD_MODE permission
+        // GOD_MODE permission for guild and bot owners
+        const godModePermission = new Permission({
+            id:      "GOD_MODE",
+            name:    "God Mode",
+            comment: "You're the boss, so you can do anything!",
+            guild:   guildMember.guild,
+        });
+        // owner always has GOD_MODE
         if (guildMember.id === guildMember.guild.ownerID) {
-            permissions.set("GOD_MODE", new Permission({
-                id:      "GOD_MODE",
-                name:    "God Mode",
-                comment: "You're the boss, so you can do anything!",
-                guild:   guildMember.guild,
-            }));
+            permissions.set("GOD_MODE", godModePermission);
+        }
+        // bot owner has GOD_MODE if enabled in settings
+        if (guildMember.id === secrets.bot_owner
+                && (await this.loadGuildSettings(guildMember.guild)).get("BOT_OWNER_GOD_MODE").enabled) {
+            permissions.set("GOD_MODE", godModePermission);
         }
 
         return new TmhiMember(guildMember, {

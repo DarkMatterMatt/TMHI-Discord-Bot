@@ -11,6 +11,9 @@ module.exports = {
     // discord bot login token
     bot_token: "myToken_0NTuhfAq4gzg3OTE.Tk4MjY.gwMz_2Ktdse0Z66THVtgbgExBT5",
 
+    // bot owner has full bot control IF ENABLED. disabled by default
+    bot_owner: "123456789123456789",
+
     // documentation home page
     documentation_url: `https://mattm.win/tmhi/discordbot/docs/${process.env.npm_package_version}/`,
 
