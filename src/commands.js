@@ -3,9 +3,9 @@
 // imports
 const Discord    = require("discord.js");
 const Collection = require("discord.js/src/util/Collection");
-const Permission = require("./Permission.js");
-const Command    = require("./Command.js");
-const secrets    = require("./secrets.js");
+const Permission = require("./Permission");
+const Command    = require("./Command");
+const secrets    = require("./secrets");
 
 const commands = new Collection();
 

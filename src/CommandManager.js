@@ -1,4 +1,5 @@
-const commands = require("./commands.js");
+// imports
+const commands = require("./commands");
 
 /** Listens for, and acts on, user commands */
 class CommandManager {
