@@ -6,17 +6,10 @@ class CommandManager {
      * Create a new command manager
      * @param {external:Client} client The client to catch events from
      * @param {tmhiDatabase} tmhiDatabase The T-MHI database interface
-     * @param {Object} [guildSpecificCommands] Additional commands for the guild
      */
-    constructor(client, tmhiDatabase, guildSpecificCommands = {}) {
+    constructor(client, tmhiDatabase) {
         this.client       = client;
         this.tmhiDatabase = tmhiDatabase;
-        this.commands     = { ...commands, ...guildSpecificCommands };
-
-        // make all commands lowercase
-        Object.keys(this.commands).forEach(key => {
-            this.commands[key.toLowerCase()] = this.commands[key];
-        });
     }
 
     /**
@@ -59,8 +52,9 @@ class CommandManager {
                 split.push(match[1] || match[2] || match[3] || match[0]);
             }
             const [originalCommand, ...args] = split;
-            const command = originalCommand.toLowerCase();
+            const command = commands.get(originalCommand.toLowerCase());
 
+            // data to pass to the command
             const commandData = {
                 tmhiDatabase: this.tmhiDatabase,
                 message,
@@ -71,13 +65,13 @@ class CommandManager {
                 prefix,
             };
 
-            if ({}.hasOwnProperty.call(this.commands, command)) {
+            if (command !== undefined) {
                 // run command
-                this.commands[command](commandData);
+                command.run(commandData);
             }
             else {
                 // default to "help" if command does not exist
-                this.commands.help(commandData);
+                commands.get("help").run(commandData);
             }
 
             // delete command message if setting enabled

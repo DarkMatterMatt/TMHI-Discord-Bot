@@ -1,29 +1,113 @@
 /* eslint-disable object-curly-newline */
 
 // imports
+const Discord    = require("discord.js");
+const Collection = require("discord.js/src/util/Collection");
 const Permission = require("./Permission.js");
+const Command    = require("./Command.js");
+const secrets    = require("./secrets.js");
 
-// commands
-const commands = {};
+const commands = new Collection();
+
+/**
+ * Add a single command
+ * @param {Object} data Data to pass to the Command constructor
+ */
+function addCommand(data) {
+    const command = new Command(data);
+    commands.set(command.id, command);
+}
+
+/**
+ * Add an alias for a command
+ * @param {string} id The original command to create the alias to
+ * @param {string} newId The new alias to create
+ */
+function addCommandAlias(id, newId) {
+    const command = commands.get(id.toLowerCase());
+
+    const clone = Object.assign(Object.create(command), command);
+    clone.isAlias = true;
+
+    commands.set(newId.toLowerCase(), clone);
+}
 
 /**
  * Send help in a direct message
  * @category Commands
  * @module help
- * @todo Implement this command
  */
-commands.help = async ({ message }) => {
-    message.reply("Help not yet implemented :(");
-};
+async function help({ message, args, settings, prefix }) {
+    const embed = new Discord.RichEmbed()
+        .setTimestamp()
+        .setFooter(`T-MHI Bot v${process.env.npm_package_version} by @DarkMatterMatt`);
+
+    if (args.length === 1) {
+        // show help for a single command
+        const command = commands.get(args[0]);
+
+        if (command === undefined) {
+            // command does not exist
+            embed
+                .setTitle("T-MHI Bot Help")
+                .setDescription(`That command does not exist, try ${prefix}help to view available commands`);
+        }
+        else {
+            // command exists, show command-specific syntax
+            embed
+                .setTitle(`T-MHI Bot Help: ${command.name}`)
+                .setURL(secrets.command_documentation_url.replace("{{command}}", command.name))
+                .addField("Syntax", command.syntax.replace("{{prefix}}", prefix));
+
+            // add examples example
+            command.examples.forEach((example, index) => {
+                embed.addField(`Ex${index}: `, example);
+            });
+        }
+    }
+    else {
+        // create message to send
+        embed
+            .setTitle("T-MHI Bot Help")
+            .setDescription("Available commands are:")
+            .setURL(secrets.documentation_url);
+
+        // each command has field
+        commands.forEach(command => {
+            if (!command.isAlias) {
+                embed.addField(command.name, command.syntax.replace("{{prefix}}", prefix));
+            }
+        });
+    }
+
+    // send DM
+    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    dmChannel.send(embed);
+
+    // reply so it doesn"t look like the command failed
+    if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+        message.reply("Sent you a DM!");
+    }
+}
+addCommand({
+    name:    "help",
+    command: help,
+    syntax:  "{{prefix}}help [command]",
+});
 
 /**
  * Replies with the current version of the bot
  * @category Commands
  * @module version
  */
-commands.version = async ({ tmhiDatabase, message, args, settings, prefix }) => {
+async function version({ tmhiDatabase, message, args, settings, prefix }) {
     message.reply(`TMHI Discord Bot v${process.env.npm_package_version}`);
-};
+}
+addCommand({
+    name:    "version",
+    command: version,
+    syntax:  "{{prefix}}version",
+});
 
 /**
  * Choose whether to delete the command message after execution
@@ -31,7 +115,7 @@ commands.version = async ({ tmhiDatabase, message, args, settings, prefix }) => 
  * @module setDeleteCommandMessage
  * @param {('true'|'false'|'default')} newValue The new setting value
  */
-commands.setDeleteCommandMessage = async ({ tmhiDatabase, message, args, settings, prefix }) => {
+async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}setDeleteCommandMessage true|false|default\``);
@@ -64,8 +148,13 @@ commands.setDeleteCommandMessage = async ({ tmhiDatabase, message, args, setting
         // delete the command
         message.delete();
     }
-};
-commands.setDeleteCommand = commands.setDeleteCommandMessage;
+}
+addCommand({
+    name:    "setDeleteCommandMessage",
+    command: setDeleteCommandMessage,
+    syntax:  "{{prefix}}setDeleteCommandMessage newValue",
+});
+addCommandAlias("setDeleteCommandMessage", "setDeleteCommand");
 
 /**
  * Set the command prefix
@@ -73,7 +162,7 @@ commands.setDeleteCommand = commands.setDeleteCommandMessage;
  * @module setCommandPrefix
  * @param {string} newPrefix The new command prefix
  */
-commands.setCommandPrefix = async ({ tmhiDatabase, message, args, settings, prefix }) => {
+async function setCommandPrefix({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}setCommandPrefix newPrefix|null\``);
@@ -101,8 +190,13 @@ commands.setCommandPrefix = async ({ tmhiDatabase, message, args, settings, pref
 
     // successful database update
     message.reply(`Updated command prefix to \`${newPrefix}\``);
-};
-commands.setPrefix = commands.setCommandPrefix;
+}
+addCommand({
+    name:    "setcommandprefix",
+    command: setCommandPrefix,
+    syntax:  "{{prefix}}setCommandPrefix newValue",
+});
+addCommandAlias("setCommandPrefix", "setPrefix");
 
 /**
  * Load a member's permissions
@@ -110,7 +204,7 @@ commands.setPrefix = commands.setCommandPrefix;
  * @module getPermissions
  * @param {string} [discordId] Optional @.member to fetch. If omitted, fetch own permissions
  */
-commands.getPermissions = async ({ tmhiDatabase, message, args, settings, prefix }) => {
+async function getPermissions({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 0 && args.length !== 1) {
         // more than one argument
         message.reply(`Invalid syntax. Syntax is: \`${prefix}permissions [optional @someone]\``);
@@ -150,18 +244,23 @@ commands.getPermissions = async ({ tmhiDatabase, message, args, settings, prefix
 
     const permissionsString = member.tmhiPermissions.map(p => p.name).join(", ");
     message.reply(`${member.displayName}'s permissions are: ${permissionsString}`);
-};
-commands.permissions = commands.getPermissions;
+}
+addCommand({
+    name:    "getPermissions",
+    command: getPermissions,
+    syntax:  "{{prefix}}getPermissions [@.member]",
+});
+addCommandAlias("getPermissions", "permissions");
 
 /**
  * Create a new permission which can be granted to Discord roles
  * @category Commands
  * @module createPermission
- * @param {string} roleId The new role ID
+ * @param {string} permissionId The new permission ID
  * @param {string} name A pretty name for the permission
  * @param {string} description The permission's description
  */
-commands.createPermission = async ({ tmhiDatabase, message, args, settings, prefix }) => {
+async function createPermission({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 3) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}createPermission `
@@ -195,7 +294,12 @@ commands.createPermission = async ({ tmhiDatabase, message, args, settings, pref
 
     // successful database update
     message.reply(`Created permission: ${id}`);
-};
+}
+addCommand({
+    name:    "createPermission",
+    command: createPermission,
+    syntax:  "{{prefix}}createPermission PERMISSION_ID \"Permission Name\" \"description\"",
+});
 
 /**
  * Grant a permission to a role
@@ -205,7 +309,7 @@ commands.createPermission = async ({ tmhiDatabase, message, args, settings, pref
  * @param {string} permissionId The ID of the permission to grant
  * @param {string} [comment] An optional comment to accompany the database entry
  */
-commands.grantRolePermission = async ({ tmhiDatabase, message, args, settings, prefix }) => {
+async function grantRolePermission({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 2 && args.length !== 3) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}grantRolePermission `
@@ -251,13 +355,18 @@ commands.grantRolePermission = async ({ tmhiDatabase, message, args, settings, p
 
     // successful database update
     message.reply(`Granted ${args[1]} to ${message.guild.roles.get(roleId)}`);
-};
+}
+addCommand({
+    name:    "grantRolePermission",
+    command: grantRolePermission,
+    syntax:  "{{prefix}}grantRolePermission @.role PERMISSION_ID \"comment\"",
+});
 
 /**
  * Invalid command, send a direct message to the member with the help text
  * @category Commands
  * @module invalidCommand
  */
-commands.invalidCommand = commands.help;
+addCommandAlias("help", "invalidCommand");
 
 module.exports = commands;
