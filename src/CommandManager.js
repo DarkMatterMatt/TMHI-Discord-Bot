@@ -22,6 +22,11 @@ class CommandManager {
                 return;
             }
 
+            if (!message.guild || !message.guild.available) {
+                message.reply("Sorry, I haven't learnt how to reply to DMs yet :cry:");
+                return;
+            }
+
             const settings = await this.tmhiDatabase.loadGuildSettings(message.guild);
             let prefix     = settings.get("COMMAND_PREFIX").value;
             if (prefix === null) {
