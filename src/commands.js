@@ -381,10 +381,13 @@ async function createPoll({ tmhiDatabase, message, args }) {
 
     // send the poll and add reactions
     const poll = await message.channel.send(pollDescription);
-    reactions.forEach(async (reaction) => {
+    for (const reaction of reactions) {
         const customCheck = message.guild.emojis.find(e => e.name === reaction);
+
+        // await so the reactions are in the correct order
+        // eslint-disable-next-line no-await-in-loop
         await poll.react(customCheck ? customCheck.id : reaction);
-    });
+    }
 
     // always delete poll creation messages (because they're almost directly echoed back to the server)
     message.delete();
