@@ -373,6 +373,7 @@ async function createPoll({ tmhiDatabase, message, args }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (!author.hasPermission("CREATE_POLLS")) {
         message.reply("Sorry, to create a poll you need the CREATE_POLLS permission");
+        return;
     }
 
     const [pollDescription] = args;
