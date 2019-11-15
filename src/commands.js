@@ -366,6 +366,8 @@ addCommand({
  * Creates a reaction poll
  * @category Commands
  * @module createPoll
+ * @param {string} pollDescription The poll description to echo
+ * @param {...string} reactions Any number of parameters, one reaction each
  */
 async function createPoll({ tmhiDatabase, message, args }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
