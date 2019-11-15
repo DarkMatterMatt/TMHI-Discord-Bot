@@ -327,6 +327,12 @@ class TmhiDatabase {
             comment: "Run !grantRolePermissions",
             guild,
         });
+        this.createPermission({
+            id:      "CREATE_POLLS",
+            name:    "Create Polls",
+            comment: "Run !createPoll",
+            guild,
+        });
     }
 
     /**

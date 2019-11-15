@@ -363,6 +363,37 @@ addCommand({
 });
 
 /**
+ * Creates a reaction poll
+ * @category Commands
+ * @module createPoll
+ */
+async function createPoll({ tmhiDatabase, message, args, settings, prefix }) {
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (!author.hasPermission("CREATE_POLLS")) {
+        message.reply("Sorry, to create a poll you need the CREATE_POLLS permission");
+    }
+
+    const [pollDescription] = args;
+    const reactions = args.length === 1 ? ["👍", "👎"] : args.slice(1);
+
+    // send the poll and add reactions
+    const poll = await message.channel.send(pollDescription);
+    reactions.forEach(async (reaction) => {
+        const customCheck = message.guild.emojis.find(e => e.name === reaction);
+        await poll.react(customCheck ? customCheck.id : reaction);
+    });
+
+    // always delete poll creation messages (because they're almost directly echoed back to the server)
+    message.delete();
+}
+addCommand({
+    name:    "createPoll",
+    command: createPoll,
+    syntax:  "{{prefix}}createPoll \"poll description\" [reaction1] [reaction2] ...",
+});
+addCommandAlias("createPoll", "poll");
+
+/**
  * Invalid command, send a direct message to the member with the help text
  * @category Commands
  * @module invalidCommand
