@@ -49,6 +49,12 @@ class CommandManager {
                 return;
             }
 
+            // no command
+            if (messageContent === "") {
+                message.reply("Yes? I'm listening");
+                return;
+            }
+
             // split into command and an array of arguments
             // support for quoted ('"`) string arguments, https://stackoverflow.com/a/366532/6595777
             // escaped quotes are NOT supported. Surely the user won't need 3 types of quotes...?
