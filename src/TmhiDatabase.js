@@ -33,7 +33,7 @@ class TmhiDatabase {
                 ;`, {
                     guildId:   setting.guild.id,
                     settingId: setting.id,
-                });
+                }).catch(e => e);
             }
             // upsert guildsetting entry with setting value and comment
             return this.pool.query(`
@@ -46,12 +46,19 @@ class TmhiDatabase {
                 settingId: setting.id,
                 value:     setting.value,
                 comment:   setting.comment,
-            });
+            }).catch(e => e);
         }));
+
+        // there was at least one error
+        queries.error = queries.find(q => q instanceof Error);
+        if (queries.error) {
+            queries.status = "error";
+            return queries;
+        }
 
         // affected rows of all queries combined
         queries.affectedRows = queries.reduce((tot, query) => tot + query[0].affectedRows, 0);
-
+        queries.status = "success";
         return queries;
     }
 
@@ -65,6 +72,12 @@ class TmhiDatabase {
         settings.set(setting.id, setting);
 
         const [query] = await this.storeGuildSettings(settings);
+        if (query instanceof Error) {
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+        query.status = "success";
         return query;
     }
 
@@ -79,10 +92,18 @@ class TmhiDatabase {
         let rows;
 
         // load descriptions & default values
-        [rows] = await this.pool.query(`
-            SELECT id, name, comment, defaultvalue
-            FROM settings
-        ;`);
+        try {
+            [rows] = await this.pool.query(`
+                SELECT id, name, comment, defaultvalue
+                FROM settings
+            ;`);
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
 
         rows.forEach(row => {
             settings.set(row.id, new Setting({
@@ -95,11 +116,19 @@ class TmhiDatabase {
         });
 
         // load guild settings
-        [rows] = await this.pool.query(`
-            SELECT settingid, value, comment
-            FROM guildsettings
-            WHERE guildid=:guildId
-        ;`, { guildId: guild.id });
+        try {
+            [rows] = await this.pool.query(`
+                SELECT settingid, value, comment
+                FROM guildsettings
+                WHERE guildid=:guildId
+            ;`, { guildId: guild.id });
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
 
         rows.forEach(row => {
             const setting = settings.get(row.settingid);
@@ -116,12 +145,23 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async addGuild(guild) {
-        return this.pool.query(`
-            INSERT INTO guilds (id, name, ownerid, iconurl, region, mfalevel, verificationlevel, createdtimestamp)
-            VALUES (:id, :name, :ownerID, :iconURL, :region, :mfaLevel, :verificationLevel, :createdTimestamp)
-            ON DUPLICATE KEY
-            UPDATE name=:name
-        ;`, guild);
+        try {
+            const query = await this.pool.query(`
+                INSERT INTO guilds (id, name, ownerid, iconurl, region, mfalevel, verificationlevel, createdtimestamp)
+                VALUES (:id, :name, :ownerID, :iconURL, :region, :mfaLevel, :verificationLevel, :createdTimestamp)
+                ON DUPLICATE KEY
+                UPDATE name=:name
+            ;`, guild);
+
+            query.status = "success";
+            return query;
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
     }
 
     /**
@@ -130,15 +170,26 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async addMember(guildMember) {
-        return this.pool.query(`
-            INSERT INTO members (id, displayname)
-            VALUES (:id, :displayname)
-            ON DUPLICATE KEY
-            UPDATE displayname=:displayname
-        ;`, {
-            id:          guildMember.id,
-            displayname: guildMember.displayName,
-        });
+        try {
+            const query = await this.pool.query(`
+                INSERT INTO members (id, displayname)
+                VALUES (:id, :displayname)
+                ON DUPLICATE KEY
+                UPDATE displayname=:displayname
+            ;`, {
+                id:          guildMember.id,
+                displayname: guildMember.displayName,
+            });
+
+            query.status = "success";
+            return query;
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
     }
 
     /**
@@ -150,11 +201,19 @@ class TmhiDatabase {
         let rows;
 
         // load user from database
-        [rows] = await this.pool.query(`
-            SELECT timezone, wikiid as wikiId, email
-            FROM members
-            WHERE id=:id
-        ;`, { id: guildMember.id });
+        try {
+            [rows] = await this.pool.query(`
+                SELECT timezone, wikiid as wikiId, email
+                FROM members
+                WHERE id=:id
+            ;`, { id: guildMember.id });
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
 
         // no user found
         if (rows.length === 0) {
@@ -166,13 +225,21 @@ class TmhiDatabase {
         const permissions = new Collection();
 
         // load permissions from roles
-        [rows] = await this.pool.query(`
-            SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
-            FROM rolepermissions
-            JOIN permissions ON rolepermissions.permissionid=permissions.id
-            WHERE rolepermissions.guildid=?
-                AND rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
-        ;`, [guildMember.guild.id, ...guildMember.roles.map(r => r.id)]);
+        try {
+            [rows] = await this.pool.query(`
+                SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
+                FROM rolepermissions
+                JOIN permissions ON rolepermissions.permissionid=permissions.id
+                WHERE rolepermissions.guildid=?
+                    AND rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
+            ;`, [guildMember.guild.id, ...guildMember.roles.map(r => r.id)]);
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
 
         rows.forEach(row => {
             permissions.set(row.id, new Permission({
@@ -184,15 +251,23 @@ class TmhiDatabase {
         });
 
         // load member-specific permissions
-        [rows] = await this.pool.query(`
-            SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
-            FROM memberpermissions
-            JOIN permissions ON memberpermissions.permissionid=permissions.id
-            WHERE memberpermissions.memberid=:memberId AND memberpermissions.guildid=:guildId
-        ;`, {
-            memberId: guildMember.id,
-            guildId:  guildMember.guild.id,
-        });
+        try {
+            [rows] = await this.pool.query(`
+                SELECT permissions.id as id, permissions.name as name, permissions.comment as comment
+                FROM memberpermissions
+                JOIN permissions ON memberpermissions.permissionid=permissions.id
+                WHERE memberpermissions.memberid=:memberId AND memberpermissions.guildid=:guildId
+            ;`, {
+                memberId: guildMember.id,
+                guildId:  guildMember.guild.id,
+            });
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
 
         rows.forEach(row => {
             permissions.set(row.id, new Permission({
@@ -235,20 +310,31 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async storeGuildRole(role, comment = null) {
-        return this.pool.query(`
-            INSERT INTO roles (id, guildid, name, hexcolor, discordpermissions ${comment ? ", comment" : ""})
-            VALUES (:roleId, :guildId, :name, :hexColor, :permissions ${comment ? ", :comment" : ""})
-            ON DUPLICATE KEY
-            UPDATE name=:name, hexcolor=:hexColor, discordpermissions=:permissions
-                ${comment !== null ? ", comment=:comment" : ""}
-        `, {
-            roleId:      role.id,
-            guildId:     role.guild.id,
-            name:        role.name,
-            hexColor:    role.hexColor,
-            permissions: role.permissions,
-            comment,
-        });
+        try {
+            const query = await this.pool.query(`
+                INSERT INTO roles (id, guildid, name, hexcolor, discordpermissions ${comment ? ", comment" : ""})
+                VALUES (:roleId, :guildId, :name, :hexColor, :permissions ${comment ? ", :comment" : ""})
+                ON DUPLICATE KEY
+                UPDATE name=:name, hexcolor=:hexColor, discordpermissions=:permissions
+                    ${comment !== null ? ", comment=:comment" : ""}
+            `, {
+                roleId:      role.id,
+                guildId:     role.guild.id,
+                name:        role.name,
+                hexColor:    role.hexColor,
+                permissions: role.permissions,
+                comment,
+            });
+
+            query.status = "success";
+            return query;
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
     }
 
     /**
@@ -258,10 +344,21 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async deleteGuildRolesExcluding(guild, roles) {
-        return this.pool.query(`
+        try {
+            const query = await this.pool.query(`
             DELETE FROM roles
             WHERE guildid=? AND id NOT IN (${Array(roles.size).fill("?").join()})
         `, [guild.id, ...roles.map(r => r.id)]);
+
+            query.status = "success";
+            return query;
+        }
+        catch (error) {
+            return {
+                status: "error",
+                error,
+            };
+        }
     }
 
     /**
@@ -271,10 +368,26 @@ class TmhiDatabase {
      */
     async syncGuildRoles(guild) {
         // remove roles that no longer exist
-        await this.deleteGuildRolesExcluding(guild, guild.roles);
+        const result = await this.deleteGuildRolesExcluding(guild, guild.roles);
+
+        if (result.status !== "success") {
+            return result;
+        }
 
         // add roles
-        return Promise.all(guild.roles.map(role => this.storeGuildRole(role)));
+        const queries = await Promise.all(guild.roles.map(role => this.storeGuildRole(role).catch(e => e)));
+
+        // there was at least one error
+        queries.error = queries.find(q => q instanceof Error);
+        if (queries.error) {
+            queries.status = "error";
+            return queries;
+        }
+
+        // affected rows of all queries combined
+        queries.affectedRows = queries.reduce((tot, query) => tot + query[0].affectedRows, 0);
+        queries.status = "success";
+        return queries;
     }
 
     /**
@@ -282,26 +395,44 @@ class TmhiDatabase {
      * @param {external:Guild} guild The guild to synchronize
      */
     async syncGuild(guild) {
+        let result;
+
         // add guild to database
-        await this.addGuild(guild);
+        result = await this.addGuild(guild);
+        if (result.status !== "success") {
+            return result;
+        }
 
         // make all basic permissions
-        await this.initializeGuildPermissions(guild);
+        result = await this.initializeGuildPermissions(guild);
+        if (result.status !== "success") {
+            return result;
+        }
 
         // force update for all roles
-        await this.syncGuildRoles(guild);
+        result = await this.syncGuildRoles(guild);
+        if (result.status !== "success") {
+            return result;
+        }
 
         // force update for all users
-        guild.members.forEach(async (member) => {
+        for (const member of guild.members) {
             // skip bot users
             if (member.user.bot) {
-                return;
+                continue;
             }
 
             // check that the user is added to the database
-            await this.addMember(member);
-            await this.syncMemberRoles(member);
-        });
+            result = await this.addMember(member);
+            if (result.status !== "success") {
+                return result;
+            }
+
+            result = await this.syncMemberRoles(member);
+            if (result.status !== "success") {
+                return result;
+            }
+        }
     }
 
     /**
@@ -309,30 +440,49 @@ class TmhiDatabase {
      * @param {external:Guild} guild The guild to initialize permissions for
      */
     async initializeGuildPermissions(guild) {
+        let result;
+
         this.createPermission({
             id:      "ADMIN",
             name:    "Admin",
             comment: "Admins can run any commands",
             guild,
         });
-        this.createPermission({
+        if (result.status !== "success") {
+            return result;
+        }
+
+        result = this.createPermission({
             id:      "CREATE_PERMISSIONS",
             name:    "Create Permissions",
             comment: "Run !createPermissions",
             guild,
         });
-        this.createPermission({
+        if (result.status !== "success") {
+            return result;
+        }
+
+        result = this.createPermission({
             id:      "GRANT_ROLE_PERMISSIONS",
             name:    "Grant Role Permissions",
             comment: "Run !grantRolePermissions",
             guild,
         });
-        this.createPermission({
+        if (result.status !== "success") {
+            return result;
+        }
+
+        result = this.createPermission({
             id:      "CREATE_POLLS",
             name:    "Create Polls",
             comment: "Run !createPoll",
             guild,
         });
+        if (result.status !== "success") {
+            return result;
+        }
+
+        return { status: "success" };
     }
 
     /**
@@ -343,7 +493,7 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async storeMemberRole(member, role, comment = null) {
-        return this.pool.query(`
+        const query = await this.pool.query(`
             INSERT INTO memberroles (memberid, roleid, guildid ${comment ? ", comment" : ""})
             VALUES (:memberId, :roleId, :guildId ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
@@ -353,7 +503,17 @@ class TmhiDatabase {
             roleId:   role.id,
             guildId:  role.guild.id,
             comment,
-        });
+        }).catch(e => e);
+
+        // something went wrong
+        if (query instanceof Error) {
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+
+        query.status = "success";
+        return query;
     }
 
     /**
@@ -363,10 +523,20 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async deleteMemberRolesExcluding(member, roles) {
-        return this.pool.query(`
+        const query = await this.pool.query(`
             DELETE FROM memberroles
             WHERE memberid=? AND guildid=? AND roleid NOT IN (${Array(roles.size).fill("?").join()})
-        `, [member.id, member.guild.id, ...roles.map(r => r.id)]);
+        `, [member.id, member.guild.id, ...roles.map(r => r.id)]).catch(e => e);
+
+        // something went wrong
+        if (query instanceof Error) {
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+
+        query.status = "success";
+        return query;
     }
 
     /**
@@ -376,10 +546,25 @@ class TmhiDatabase {
      */
     async syncMemberRoles(member) {
         // remove roles that the user no longer has
-        await this.deleteMemberRolesExcluding(member, member.roles);
+        const result = await this.deleteMemberRolesExcluding(member, member.roles);
+        if (result.status !== "success") {
+            return result;
+        }
 
         // add roles
-        return Promise.all(member.roles.map(role => this.storeMemberRole(member, role)));
+        const queries = await Promise.all(member.roles.map(role => this.storeMemberRole(member, role).catch(e => e)));
+
+        // there was at least one error
+        queries.error = queries.find(q => q instanceof Error);
+        if (queries.error) {
+            queries.status = "error";
+            return queries;
+        }
+
+        // affected rows of all queries combined
+        queries.affectedRows = queries.reduce((tot, query) => tot + query[0].affectedRows, 0);
+        queries.status = "success";
+        return queries;
     }
 
     /**
@@ -394,7 +579,7 @@ class TmhiDatabase {
             throw new Error("Cannot grant a permission to a role from another server!");
         }
 
-        return this.pool.query(`
+        const query = await this.pool.query(`
             INSERT INTO rolepermissions (roleid, permissionid, guildid ${comment ? ", comment" : ""})
             VALUES (:roleId, :permissionId, :guildId ${comment ? ", :comment" : ""})
             ON DUPLICATE KEY
@@ -404,7 +589,17 @@ class TmhiDatabase {
             permissionId: permission.id,
             guildId:      role.guild.id,
             comment,
-        });
+        }).catch(e => e);
+
+        // something went wrong
+        if (query instanceof Error) {
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+
+        query.status = "success";
+        return query;
     }
 
     /**
@@ -413,7 +608,7 @@ class TmhiDatabase {
      * @returns {Object} A query result
      */
     async createPermission(permission) {
-        return this.pool.query(`
+        const query = await this.pool.query(`
             INSERT INTO permissions (id, guildid, name ${permission.comment ? ", comment" : ""})
             VALUES (:permissionId, :guildid, :name ${permission.comment ? ", :comment" : ""})
             ON DUPLICATE KEY
@@ -423,7 +618,17 @@ class TmhiDatabase {
             guildid:      permission.guild.id,
             name:         permission.name,
             comment:      permission.comment,
-        });
+        }).catch(e => e);
+
+        // something went wrong
+        if (query instanceof Error) {
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+
+        query.status = "success";
+        return query;
     }
 
     /**
@@ -432,15 +637,20 @@ class TmhiDatabase {
      * @returns {boolean} True if the permission exists
      */
     async permissionExists(permission) {
-        const [rows] = await this.pool.query(`
+        const query = await this.pool.query(`
             SELECT id FROM permissions
             WHERE id=:permissionId AND guildid=:guildId
         `, {
             permissionId: permission.id,
             guildId:      permission.guild.id,
-        });
+        }).catch(e => e);
 
-        return rows.length !== 0;
+        // something went wrong
+        if (query instanceof Error) {
+            console.error(query);
+            return false;
+        }
+        return query[0] && query[0].length;
     }
 }
 
