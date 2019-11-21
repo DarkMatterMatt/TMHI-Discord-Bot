@@ -136,6 +136,7 @@ class TmhiDatabase {
             setting.guildComment = row.comment;
         });
 
+        settings.status = "success";
         return settings;
     }
 
@@ -295,12 +296,14 @@ class TmhiDatabase {
             permissions.set("GOD_MODE", godModePermission);
         }
 
-        return new TmhiMember(guildMember, {
+        const tmhiMember = new TmhiMember(guildMember, {
             timezone,
             tmhiPermissions: permissions,
             wikiId,
             email,
         });
+        tmhiMember.status = "success";
+        return tmhiMember;
     }
 
     /**
@@ -346,9 +349,9 @@ class TmhiDatabase {
     async deleteGuildRolesExcluding(guild, roles) {
         try {
             const query = await this.pool.query(`
-            DELETE FROM roles
-            WHERE guildid=? AND id NOT IN (${Array(roles.size).fill("?").join()})
-        `, [guild.id, ...roles.map(r => r.id)]);
+                DELETE FROM roles
+                WHERE guildid=? AND id NOT IN (${Array(roles.size).fill("?").join()})
+            `, [guild.id, ...roles.map(r => r.id)]);
 
             query.status = "success";
             return query;
