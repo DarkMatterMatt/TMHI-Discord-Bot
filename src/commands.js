@@ -253,7 +253,7 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
     const guildMember = message.guild.members.get(memberIdToFetch);
-    if (guildMember === null) {
+    if (guildMember === undefined) {
         // no such user in guild
         message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
         return;
