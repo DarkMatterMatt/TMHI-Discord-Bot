@@ -29,7 +29,14 @@ class CommandManager {
             }
 
             const settings = await this.tmhiDatabase.loadGuildSettings(message.guild);
-            let prefix     = settings.get("COMMAND_PREFIX").value;
+            if (settings.status !== "success") {
+                // failed to load settings from database
+                console.error(settings.error);
+                message.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
+                return;
+            }
+
+            let prefix = settings.get("COMMAND_PREFIX").value;
             if (prefix === null) {
                 prefix = `${this.client.user}`;
             }

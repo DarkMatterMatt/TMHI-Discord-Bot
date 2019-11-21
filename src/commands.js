@@ -124,6 +124,12 @@ async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, 
 
     const newValue = args[0] === "null" ? null : args[0];
     const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
 
     if (!author.hasPermission("ADMIN")) {
         // missing permissions
@@ -134,9 +140,10 @@ async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, 
     const setting = settings.get("DELETE_COMMAND_MESSAGE");
     setting.value = newValue;
 
-    const [rows] = await tmhiDatabase.storeGuildSetting(setting);
-    if (!rows.affectedRows) {
+    const result = await tmhiDatabase.storeGuildSetting(setting);
+    if (result.status !== "success") {
         // database operation failed
+        console.error(result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -171,6 +178,12 @@ async function setCommandPrefix({ tmhiDatabase, message, args, settings, prefix 
 
     const newPrefix = args[0] === "null" ? null : args[0];
     const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
 
     if (!author.hasPermission("ADMIN")) {
         // missing permissions
@@ -181,8 +194,8 @@ async function setCommandPrefix({ tmhiDatabase, message, args, settings, prefix 
     const setting = settings.get("COMMAND_PREFIX");
     setting.value = newPrefix;
 
-    const [rows] = await tmhiDatabase.storeGuildSetting(setting);
-    if (!rows.affectedRows) {
+    const result = await tmhiDatabase.storeGuildSetting(setting);
+    if (result.status !== "success") {
         // database operation failed
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
@@ -212,6 +225,12 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     }
 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
 
     if (args.length === 0) {
         // fetching own permissions
@@ -233,9 +252,20 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    const member = await tmhiDatabase.loadTmhiMember(
-        await message.guild.fetchMember(memberIdToFetch)
-    );
+    const guildMember = message.guild.members.get(memberIdToFetch);
+    if (guildMember === null) {
+        // no such user in guild
+        message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
+        return;
+    }
+
+    const member = await tmhiDatabase.loadTmhiMember(guildMember);
+    if (member.status !== "success") {
+        // failed to load user from database
+        console.error(member.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
 
     if (member.tmhiPermissions.size === 0) {
         message.reply(`${member.displayName} has no permissions`);
@@ -269,6 +299,12 @@ async function createPermission({ tmhiDatabase, message, args, prefix }) {
     }
 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
 
     if (!author.hasPermission("CREATE_PERMISSIONS")) {
         // missing permission
@@ -284,10 +320,10 @@ async function createPermission({ tmhiDatabase, message, args, prefix }) {
         guild: message.guild,
     });
 
-    const [rows] = await tmhiDatabase.createPermission(permission);
-
-    if (!rows.affectedRows) {
-        // database operation failed
+    const result = await tmhiDatabase.createPermission(permission);
+    if (result.status !== "success") {
+        // failed to load user from database
+        console.error(result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -321,6 +357,12 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     const [, permissionId, comment] = args;
 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
 
     if (!author.hasPermission("GRANT_ROLE_PERMISSIONS")) {
         // user doesn't have permission
@@ -345,10 +387,10 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
         return;
     }
 
-    const [rows] = await tmhiDatabase.grantRolePermission(role, permission, comment);
-
-    if (rows.affectedRows === 0) {
-        // database operation failed
+    const result = await tmhiDatabase.grantRolePermission(role, permission, comment);
+    if (result.status !== "success") {
+        // failed to load user from database
+        console.error(result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -371,6 +413,13 @@ addCommand({
  */
 async function createPoll({ tmhiDatabase, message, args }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
     if (!author.hasPermission("CREATE_POLLS")) {
         message.reply("Sorry, to create a poll you need the CREATE_POLLS permission");
         return;
