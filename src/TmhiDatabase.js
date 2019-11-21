@@ -436,11 +436,6 @@ class TmhiDatabase {
 
         // force update for all users
         for (const [, member] of guild.members) {
-            // skip bot users
-            if (member.user.bot) {
-                continue;
-            }
-
             // check that the user is added to the database
             // eslint-disable-next-line no-await-in-loop
             result = await this.addMember(member);
