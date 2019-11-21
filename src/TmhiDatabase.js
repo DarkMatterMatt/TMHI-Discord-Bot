@@ -416,23 +416,27 @@ class TmhiDatabase {
         }
 
         // force update for all users
-        for (const member of guild.members) {
+        for (const [, member] of guild.members) {
             // skip bot users
             if (member.user.bot) {
                 continue;
             }
 
             // check that the user is added to the database
+            // eslint-disable-next-line no-await-in-loop
             result = await this.addMember(member);
             if (result.status !== "success") {
                 return result;
             }
 
+            // eslint-disable-next-line no-await-in-loop
             result = await this.syncMemberRoles(member);
             if (result.status !== "success") {
                 return result;
             }
         }
+
+        return { status: "success" };
     }
 
     /**
@@ -442,7 +446,7 @@ class TmhiDatabase {
     async initializeGuildPermissions(guild) {
         let result;
 
-        this.createPermission({
+        result = this.createPermission({
             id:      "ADMIN",
             name:    "Admin",
             comment: "Admins can run any commands",
