@@ -52,6 +52,7 @@ class TmhiDatabase {
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
         if (queries.error) {
+            console.error(queries.error);
             queries.status = "error";
             return queries;
         }
@@ -73,6 +74,7 @@ class TmhiDatabase {
 
         const [query] = await this.storeGuildSettings(settings);
         if (query instanceof Error) {
+            console.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -99,6 +101,7 @@ class TmhiDatabase {
             ;`);
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -124,6 +127,7 @@ class TmhiDatabase {
             ;`, { guildId: guild.id });
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -158,6 +162,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -186,6 +191,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -210,6 +216,7 @@ class TmhiDatabase {
             ;`, { id: guildMember.id });
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -218,7 +225,11 @@ class TmhiDatabase {
 
         // no user found
         if (rows.length === 0) {
-            throw new Error(`Failed loading user with id: ${guildMember.id}`);
+            console.error(`Failed loading user with id: ${guildMember.id} from the database`);
+            return {
+                status: "error",
+                error:  `Failed loading user with id: ${guildMember.id} from the database`,
+            };
         }
         const { timezone, wikiId, email } = rows[0];
 
@@ -236,6 +247,7 @@ class TmhiDatabase {
             ;`, [guildMember.guild.id, ...guildMember.roles.map(r => r.id)]);
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -264,6 +276,7 @@ class TmhiDatabase {
             });
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -333,6 +346,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -357,6 +371,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
+            console.error(error);
             return {
                 status: "error",
                 error,
@@ -383,6 +398,7 @@ class TmhiDatabase {
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
         if (queries.error) {
+            console.error(queries.error);
             queries.status = "error";
             return queries;
         }
@@ -514,6 +530,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
+            console.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -537,6 +554,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
+            console.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -564,6 +582,7 @@ class TmhiDatabase {
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
         if (queries.error) {
+            console.error(queries.error);
             queries.status = "error";
             return queries;
         }
@@ -600,6 +619,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
+            console.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -629,6 +649,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
+            console.error(query);
             query.status = "error";
             query.error  = query;
             return query;
