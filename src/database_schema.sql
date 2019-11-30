@@ -46,7 +46,7 @@ CREATE TABLE roles (
     discordpermissions  BIGINT          NOT NULL,
     comment             VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY         (guildid)       REFERENCES  guilds(id),
+    FOREIGN KEY         (guildid)       REFERENCES  guilds(id)  ON DELETE CASCADE,
     PRIMARY KEY         (id, guildid)
 );
 
@@ -56,7 +56,7 @@ CREATE TABLE permissions (
     name            VARCHAR(255)    NOT NULL        COMMENT 'Name to show members, e.g. "Wiki Access"',
     comment         VARCHAR(8192)   DEFAULT '',
     
-    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
+    FOREIGN KEY     (guildid)       REFERENCES  guilds(id)      ON DELETE CASCADE,
     PRIMARY KEY     (id, guildid)
 );
 
@@ -68,8 +68,8 @@ CREATE TABLE guildsettings (
     value           VARCHAR(255),
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
-    FOREIGN KEY     (settingid)     REFERENCES  settings(id),
+    FOREIGN KEY     (guildid)       REFERENCES  guilds(id)      ON DELETE CASCADE,
+    FOREIGN KEY     (settingid)     REFERENCES  settings(id)    ON DELETE CASCADE,
     PRIMARY KEY     (guildid, settingid)
 );
 
@@ -78,8 +78,8 @@ CREATE TABLE memberguilds (
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (memberid)      REFERENCES  members(id),
-    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
+    FOREIGN KEY     (memberid)      REFERENCES  members(id)     ON DELETE CASCADE,
+    FOREIGN KEY     (guildid)       REFERENCES  guilds(id)      ON DELETE CASCADE,
     PRIMARY KEY     (memberid, guildid)
 );
 
@@ -89,9 +89,9 @@ CREATE TABLE memberroles (
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (roleid, guildid)               REFERENCES  roles(id, guildid),
-    FOREIGN KEY     (memberid)      REFERENCES  members(id),
-    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
+    FOREIGN KEY     (roleid, guildid)               REFERENCES  roles(id, guildid)  ON DELETE CASCADE,
+    FOREIGN KEY     (memberid)                      REFERENCES  members(id)         ON DELETE CASCADE,
+    FOREIGN KEY     (guildid)                       REFERENCES  guilds(id)          ON DELETE CASCADE,
     PRIMARY KEY     (memberid, roleid, guildid)
 );
 
@@ -101,9 +101,9 @@ CREATE TABLE rolepermissions (
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (roleid, guildid)               REFERENCES  roles(id, guildid),
-    FOREIGN KEY     (permissionid, guildid)         REFERENCES  permissions(id, guildid),
-    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
+    FOREIGN KEY     (roleid, guildid)               REFERENCES  roles(id, guildid)          ON DELETE CASCADE,
+    FOREIGN KEY     (permissionid, guildid)         REFERENCES  permissions(id, guildid)    ON DELETE CASCADE,
+    FOREIGN KEY     (guildid)                       REFERENCES  guilds(id)                  ON DELETE CASCADE,
     PRIMARY KEY     (roleid, permissionid, guildid)
 );
 
@@ -113,9 +113,9 @@ CREATE TABLE memberpermissions (
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     comment         VARCHAR(8192)   DEFAULT '',
 
-    FOREIGN KEY     (permissionid, guildid)         REFERENCES  permissions(id, guildid),
-    FOREIGN KEY     (memberid)      REFERENCES  members(id),
-    FOREIGN KEY     (guildid)       REFERENCES  guilds(id),
+    FOREIGN KEY     (permissionid, guildid)         REFERENCES  permissions(id, guildid)    ON DELETE CASCADE,
+    FOREIGN KEY     (memberid)                      REFERENCES  members(id)                 ON DELETE CASCADE,
+    FOREIGN KEY     (guildid)                       REFERENCES  guilds(id)                  ON DELETE CASCADE,
     PRIMARY KEY     (memberid, permissionid, guildid)
 );
 
