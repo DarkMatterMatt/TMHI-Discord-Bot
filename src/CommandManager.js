@@ -98,6 +98,37 @@ class CommandManager {
                 message.delete();
             }
         });
+
+        /**
+         * New user has joined the server.
+         */
+        this.client.on("guildMemberAdd", async (member) => {
+            // load guild settings
+            const settings = await this.tmhiDatabase.loadGuildSettings(member.guild);
+            if (settings.status !== "success") {
+                // failed to load settings from database
+                console.error(settings.error);
+                member.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
+                return;
+            }
+
+            const greetingMessage = settings.get("GREETING_MESSAGE");
+            const greetingChannel = settings.get("GREETING_CHANNEL");
+
+            if (!greetingChannel || !greetingMessage) {
+                // no greeting
+                return;
+            }
+
+            // fetch channel to greet in
+            const channel = member.guild.channels.get(greetingChannel.idValue);
+            if (channel === undefined) {
+                console.error(`Could not find greeting channel: ${greetingChannel.value}`);
+                return;
+            }
+
+            channel.send(greetingMessage.value.replace("{{member}}", member.toString()));
+        });
     }
 }
 
