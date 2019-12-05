@@ -2,6 +2,7 @@
 
 /* Main tables */
 
+/* contains the default values for settings (and pretty names) */
 CREATE TABLE settings (
     id                  VARCHAR(255)    NOT NULL,
     name                VARCHAR(255)    NOT NULL,
