@@ -164,6 +164,62 @@ addCommand({
 addCommandAlias("setDeleteCommandMessage", "setDeleteCommand");
 
 /**
+ * Set a setting
+ * @category Commands
+ * @module set
+ * @param {string} settingId The id of the setting to change
+ * @param {string} newValue The new setting value
+ */
+async function set({ tmhiDatabase, message, args, settings, prefix }) {
+    if (args.length !== 2) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}set SETTING_ID newValue\``);
+        return;
+    }
+
+    const settingId = args[0];
+    const newValue = args[1] === "null" ? null : args[1];
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("ADMIN")) {
+        // missing permissions
+        message.reply("You must be an admin to edit bot settings");
+        return;
+    }
+
+    const setting = settings.get(settingId);
+    if (settings === undefined) {
+        // incorrect setting id
+        message.reply("Sorry, I couldn't find that setting id!");
+        return;
+    }
+
+    setting.value = newValue;
+
+    const result = await tmhiDatabase.storeGuildSetting(setting);
+    if (result.status !== "success") {
+        // database operation failed
+        console.error(result.error);
+        message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // successful database update
+    message.reply(`Changed ${setting.name} to ${setting.value}`);
+}
+addCommand({
+    name:    "set",
+    command: set,
+    syntax:  "{{prefix}}set SETTING_ID newValue",
+});
+
+/**
  * Set the command prefix
  * @category Commands
  * @module setCommandPrefix
