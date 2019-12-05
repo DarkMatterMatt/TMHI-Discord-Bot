@@ -65,6 +65,11 @@ class Setting {
         return parseFloat(this.value);
     }
 
+    /** The value, as a string of digits */
+    get idValue() {
+        return this.value.replace(/\D/g, "");
+    }
+
     /** The value, converted to a boolean */
     get boolValue() {
         if ([0, false, null].includes(this.value)) {

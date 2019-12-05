@@ -65,7 +65,7 @@ CREATE TABLE permissions (
 CREATE TABLE guildsettings (
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     settingid       VARCHAR(255)    NOT NULL,
-    value           VARCHAR(255),
+    value           VARCHAR(8192),
     comment         VARCHAR(8192)   DEFAULT '',
 
     FOREIGN KEY     (guildid)       REFERENCES  guilds(id)      ON DELETE CASCADE,
@@ -120,6 +120,8 @@ CREATE TABLE memberpermissions (
 );
 
 /* Settings */
-INSERT INTO settings (id, name, defaultvalue)          VALUES ('COMMAND_PREFIX',         'Command Prefix',         '!');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE', 'Delete Command Message', '0', 'Delete command message after executing');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('BOT_OWNER_GOD_MODE',     'Bot Owner has God Mode', '0', 'Bot owner has full (admin) privileges');
+INSERT INTO settings (id, name, defaultvalue)          VALUES ('COMMAND_PREFIX',            'Command Prefix',           '!');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE',    'Delete Command Message',   '0',    'Delete command message after executing');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('BOT_OWNER_GOD_MODE',        'Bot Owner has God Mode',   '0',    'Bot owner has full (admin) privileges');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_CHANNEL',          'Greeting Channel',         "",     'The channel to greet new members in');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_MESSAGE',          'Greeting Message',         "",     'The message to greet new members with');
