@@ -23,13 +23,18 @@ class TmhiMember extends GuildMember {
         email           = "",
     } = {}) {
         // copy over guildMember data
-        super(guildMember.client, {
+        super(guildMember.guild, {
+            deaf:          guildMember.serverDeaf,
+            mute:          guildMember.serverMute,
+            self_mute:     guildMember.selfMute,
+            self_deaf:     guildMember.selfDeaf,
+            session_id:    guildMember.voiceSessionID,
+            channel_id:    guildMember.voiceChannelID,
             nick:          guildMember.nickname,
             joined_at:     guildMember.joinedTimestamp,
-            premium_since: guildMember.premiumSinceTimestamp,
             user:          guildMember.user,
             roles:         guildMember._roles,
-        }, guildMember.guild);
+        });
 
         this.timezone        = timezone;        // String
         this.tmhiPermissions = tmhiPermissions; // Collection
