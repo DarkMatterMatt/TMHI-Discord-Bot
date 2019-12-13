@@ -1,17 +1,17 @@
 {
   "name": "tmhi-discord-bot",
-  "version": "3.4.0",
+  "version": "3.5.0",
   "description": "TMHI Discord Bot",
   "main": "src/index.js",
   "dependencies": {
     "discord.js": "^11.5.1",
-    "mysql2": "^2.0.0"
+    "mysql2": "^2.0.2"
   },
   "devDependencies": {
-    "better-docs": "^1.4.2",
-    "eslint": "^6.6.0",
+    "better-docs": "^1.4.7",
+    "eslint": "^6.7.2",
     "eslint-config-airbnb-base": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.19.1"
   },
   "scripts": {
     "start": "node src/index.js",

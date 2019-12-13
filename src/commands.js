@@ -505,6 +505,71 @@ addCommand({
 addCommandAlias("createPoll", "poll");
 
 /**
+ * Adds a role to new members
+ */
+async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
+    if (args.length !== 1) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}initiate @member`);
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("INITIATE")) {
+        message.reply("Sorry, to initiate a user you need the INITIATE permission");
+        return;
+    }
+
+    // load requested tmhiMember
+    const memberIdToFetch = args[0].replace(/\D/g, "");
+    const guildMember = message.guild.members.get(memberIdToFetch);
+    if (guildMember === undefined) {
+        // no such user in guild
+        message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
+        return;
+    }
+
+    const member = await tmhiDatabase.loadTmhiMember(guildMember);
+    if (member.status !== "success") {
+        // failed to load user from database
+        console.error(member.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    const initiateRole = settings.get("INITIATE_ROLE");
+    if (initiateRole.enabled) {
+        // give member the role
+        member.addRole(initiateRole.idValue);
+    }
+
+    const initiateMessage = settings.get("INITIATE_MESSAGE");
+    if (initiateMessage.enabled) {
+        // send DM to member
+        const dmChannel = member.dmChannel || await member.createDM();
+        dmChannel.send(initiateMessage.value.replace("{{member}}", member.toString()));
+    }
+
+    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
+        message.reply("Please set the INITIATE_ROLE or INITIATE_MESSAGE settings to enable this command");
+        return;
+    }
+    message.reply(`Initiated ${member}!`);
+}
+addCommand({
+    name:    "initiate",
+    command: initiate,
+    syntax:  "{{prefix}}initiate @.member",
+});
+
+/**
  * Invalid command, send a direct message to the member with the help text
  * @category Commands
  * @module invalidCommand
