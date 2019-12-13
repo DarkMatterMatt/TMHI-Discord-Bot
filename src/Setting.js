@@ -75,7 +75,7 @@ class Setting {
         if ([0, false, null].includes(this.value)) {
             return false;
         }
-        return !["0", "false", "off", "no", "n"].includes(this.value.toLowerCase());
+        return !["0", "false", "off", "no", "n", ""].includes(this.value.toLowerCase());
     }
 
     /** Alias for boolValue */
