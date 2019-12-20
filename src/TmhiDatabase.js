@@ -703,12 +703,35 @@ class TmhiDatabase {
         }
 
         const clocks = new Collection();
-        rows.forEach(row => {
+        for (const row of rows) {
             // load clock/timer/stopwatch
-            let   clock;
-            const guild    = client.guilds.get(row.guildid);
-            const channel  = guild.channels.get(row.channel);
-            const message  = row.message ? channel.fetchMessage(row.message) : null;
+            let clock;
+
+            const guild = client.guilds.get(row.guildid);
+            if (guild === undefined) {
+                this.deleteClock({
+                    id:  row.id,
+                    guild,
+                });
+            }
+
+            const channel = guild.channels.get(row.channelid);
+            if (channel === undefined) {
+                this.deleteClock({
+                    id:  row.id,
+                    guild,
+                });
+            }
+
+            // eslint-disable-next-line no-await-in-loop
+            const message = row.message ? await channel.fetchMessage(row.message) : null;
+            if (message === undefined) {
+                this.deleteClock({
+                    id:  row.id,
+                    guild,
+                });
+            }
+
             const baseData = {
                 id:          row.id,
                 guild,
@@ -742,11 +765,11 @@ class TmhiDatabase {
             }
             else {
                 console.error(`Failed loading clock. Guild: ${guild}, Id: ${row.id}`, row);
-                return;
+                continue;
             }
 
             clocks.set(clock.uniqueId, clock);
-        });
+        }
 
         clocks.status = "success";
         return clocks;
@@ -786,6 +809,17 @@ class TmhiDatabase {
         }
         query.status = "success";
         return query;
+    }
+
+    /** Delete a clock */
+    async deleteClock(clock) {
+        return this.pool.query(`
+            DELETE FROM clocks
+            WHERE id=:id AND guildid=:guildId
+        ;`, {
+            id:      clock.id,
+            guildId: clock.guild.id,
+        }).catch(e => e);
     }
 }
 
