@@ -1,6 +1,3 @@
-/* imports */
-const dateFormat = require("dateformat");
-
 /** The base class of the live Clock/Timer/Stopwatch */
 class ClockBase {
     /**
@@ -59,7 +56,7 @@ class ClockBase {
 
         const nextUpdate = new Date();
         nextUpdate.setMinutes(nextUpdate.getMinutes() + 1, 0, 0);
-        setTimeout(this.loop, nextUpdate - new Date());
+        setTimeout(() => this.loop(), nextUpdate - new Date());
     }
 
     /** Start looping */
@@ -81,6 +78,10 @@ class ClockBase {
     /** Whether the clock updates a channel's name */
     get updatesChannel() {
         return !this.updatesMessage;
+    }
+
+    get uniqueId() {
+        return `${this.id}|${this.guild.id}`;
     }
 }
 
