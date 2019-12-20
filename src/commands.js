@@ -5,6 +5,9 @@ const Discord    = require("discord.js");
 const Collection = require("discord.js/src/util/Collection");
 const Permission = require("./Permission");
 const Command    = require("./Command");
+const Clock      = require("./Clock");
+const Timer      = require("./Timer");
+const Stopwatch  = require("./Stopwatch");
 const secrets    = require("./secrets");
 
 const commands = new Collection();
@@ -510,7 +513,7 @@ addCommandAlias("createPoll", "poll");
 async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}initiate @member`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}initiate @member\``);
         return;
     }
 
@@ -567,6 +570,70 @@ addCommand({
     name:    "initiate",
     command: initiate,
     syntax:  "{{prefix}}initiate @.member",
+});
+
+/**
+ * Adds a live clock
+ */
+async function addClock({ tmhiDatabase, clocks, message, args, prefix }) {
+    if (args.length !== 4 && args.length !== 5) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}addClock #.channel `
+            + "[inMessage] utcOffset CLOCK_ID clockTextFormat`. https://www.npmjs.com/package/dateformat");
+        return;
+    }
+    if (args.length === 4) {
+        // fill in optional/missing arg (inMessage default is false)
+        args.splice(1, 0, "");
+    }
+    const [channelId, inMessage, utcOffset, id, textContent] = args;
+    const { guild } = message;
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    const clockMessage = inMessage ? await channel.send("Creating clock...") : null;
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("CREATE_CLOCKS")) {
+        message.reply("Sorry, to create clocks/timers/stopwatches you need the CREATE_CLOCKS permission");
+        return;
+    }
+
+    if (channel === undefined) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    // eslint-disable-next-line use-isnan
+    if (parseFloat(utcOffset) === NaN) {
+        message.reply("Sorry, I couldn't figure out what the utcOffset is. Try something like +13h");
+        return;
+    }
+
+    const clock = new Clock({
+        id,
+        guild,
+        channel,
+        message:   clockMessage,
+        textContent,
+        utcOffset: parseFloat(utcOffset),
+    });
+    clocks.set(clock.uniqueId, clock);
+    clock.start();
+    await tmhiDatabase.storeClock(clock);
+
+    message.reply("Started clock!");
+}
+addCommand({
+    name:    "addClock",
+    command: addClock,
+    syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset CLOCK_ID "
+        + "clockTextFormat https://www.npmjs.com/package/dateformat",
 });
 
 /**
