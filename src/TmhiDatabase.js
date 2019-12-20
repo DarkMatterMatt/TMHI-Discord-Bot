@@ -5,6 +5,9 @@ const Collection = require("discord.js/src/util/Collection");
 const TmhiMember = require("./TmhiMember");
 const Permission = require("./Permission");
 const Setting    = require("./Setting");
+const Clock      = require("./Clock");
+const Timer      = require("./Timer");
+const Stopwatch  = require("./Stopwatch");
 const secrets    = require("./secrets");
 
 /** T-MHI database interface */
@@ -674,6 +677,115 @@ class TmhiDatabase {
             return false;
         }
         return query[0] && query[0].length;
+    }
+
+    /**
+     * Load all clocks (clocks, timers, stopwatches)
+     * @returns {external:Collection<string, Clock|Timer|Stopwatch>} A collection of clocks
+     */
+    async loadClocks(client) {
+        let rows;
+
+        // load clocks from database
+        try {
+            [rows] = await this.pool.query(`
+                SELECT id, guildid, channelid, messageid, textcontent,
+                    utcoffset, timefinish, timestart, timerfinishmessage
+                FROM clocks
+            `);
+        }
+        catch (error) {
+            console.error(error);
+            return {
+                status: "error",
+                error,
+            };
+        }
+
+        const clocks = new Collection();
+        rows.forEach(row => {
+            // load clock/timer/stopwatch
+            let   clock;
+            const guild    = client.guilds.get(row.guildid);
+            const channel  = guild.channels.get(row.channel);
+            const message  = row.message ? channel.fetchMessage(row.message) : null;
+            const baseData = {
+                id:          row.id,
+                guild,
+                channel,
+                message,
+                textContent: row.textcontent,
+            };
+
+            if (row.utcoffset !== null) {
+                // clock
+                clock = new Clock({
+                    utcOffset:  row.utcoffset / (60 * 60 * 1000),
+                    ...baseData,
+                });
+            }
+            else if (row.timefinish !== null && row.timerfinishmessage !== null) {
+                // timer
+                clock = new Timer({
+                    timeFinish:         new Date(row.timefinish),
+                    timerFinishMessage: row.timerFinishMessage,
+                    ...baseData,
+                });
+            }
+            else if (row.timestart !== null && row.timefinish !== null) {
+                // stopwatch
+                clock = new Stopwatch({
+                    timeStart:  new Date(row.timestart),
+                    timeFinish: new Date(row.timefinish),
+                    ...baseData,
+                });
+            }
+            else {
+                console.error(`Failed loading clock. Guild: ${guild}, Id: ${row.id}`, row);
+                return;
+            }
+
+            clocks.set(clock.uniqueId, clock);
+        });
+
+        clocks.status = "success";
+        return clocks;
+    }
+
+    /**
+     * Stores a clock (clock, timer, stopwatche)
+     * @returns {external:Collection<string, Clock|Timer|Stopwatch>} A collection of clocks
+     */
+    async storeClock(clock) {
+        // upsert guildsetting entry with setting value and comment
+        const query = this.pool.query(`
+            INSERT INTO clocks (id, guildid, channelid, messageid, textcontent,
+                utcoffset, timefinish, timestart, timerfinishmessage)
+            VALUES (:id, :guildId, :channelId, :messageId, :textContent,
+                :utcOffset, :timeFinish, :timeStart, :timerFinishMessage)
+            ON DUPLICATE KEY
+            UPDATE channelid=:channelId, messageid=:messageId, textcontent=:textContent,
+                utcoffset=:utcOffset, timefinish=:timeFinish, timerfinishmessage=:timerFinishMessage
+        `, {
+            id:                 clock.id,
+            guildId:            clock.guild.id,
+            channelId:          clock.channel.id,
+            messageId:          clock.message ? clock.message.id : null,
+            textContent:        clock.textContent,
+            utcOffset:          clock.utcOffset ? clock.utcOffset * (60 * 60 * 1000) : null,
+            timeFinish:         clock.timeFinish ? clock.timeFinish.getTime() : null,
+            timeStart:          clock.timeStart ? clock.timeStart.getTime() : null,
+            timerFinishMessage: clock.timerFinishMessage ? clock.timerFinishMessage : null,
+        }).catch(e => e);
+
+        if (query instanceof Error) {
+            console.error(query);
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+        query.status = "success";
+        return query;
     }
 }
 
