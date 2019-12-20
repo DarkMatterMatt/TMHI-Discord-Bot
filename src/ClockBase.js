@@ -22,7 +22,7 @@ class ClockBase {
         if (!channel && !message) {
             throw new Error("Channel or Message must be specified.");
         }
-
+        Object.defineProperty(this, "client", { value: guild.client });
         this.id          = id;
         this.guild       = guild;
         this.channel     = channel;

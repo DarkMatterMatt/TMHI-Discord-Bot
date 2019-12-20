@@ -9,7 +9,7 @@ class CommandManager {
      * @param {tmhiDatabase} tmhiDatabase The T-MHI database interface
      */
     constructor(client, tmhiDatabase) {
-        this.client       = client;
+        Object.defineProperty(this, "client", { value: client });
         this.tmhiDatabase = tmhiDatabase;
     }
 
