@@ -22,13 +22,26 @@ client.on("ready", async () => {
     const tmhiDatabase = new TmhiDatabase(secrets.database);
     console.log("Connected to database");
 
-    // start listening for user commands
-    const commandManager = new CommandManager(client, tmhiDatabase);
-    commandManager.startListening();
-
     client.guilds.forEach(async (guild) => {
         await tmhiDatabase.syncGuild(guild);
     });
+
+    // load clocks
+    const clocks = await tmhiDatabase.loadClocks(client);
+    if (clocks.status === "success") {
+        // start all clocks
+        clocks.forEach(clock => {
+            clock.start();
+        });
+    }
+    else {
+        // failed to load clocks from database
+        console.error(clocks.error);
+    }
+
+    // start listening for user commands
+    const commandManager = new CommandManager(client, tmhiDatabase, clocks);
+    commandManager.startListening();
 
     /**
      * Bot joined a new server.
