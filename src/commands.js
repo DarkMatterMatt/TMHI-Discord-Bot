@@ -575,21 +575,18 @@ addCommand({
 /**
  * Adds a live clock
  */
-async function addClock({ tmhiDatabase, clocks, message, args, prefix }) {
-    if (args.length !== 4 && args.length !== 5) {
+async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChannelName = false) {
+    if ((inChannelName && args.length !== 3) || (!inChannelName && args.length !== 4)) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}addClock #.channel `
-            + "[inMessage] utcOffset CLOCK_ID clockTextFormat`. https://www.npmjs.com/package/dateformat");
+            + `${inChannelName ? "" : "[messageId] "}`
+            + "utcOffset clockTextFormat`. https://www.npmjs.com/package/dateformat");
         return;
     }
-    if (args.length === 4) {
-        // fill in optional/missing arg (inMessage default is false)
-        args.splice(1, 0, "");
+    if (args.length === 3) {
+        // fill in optional/missing arg (messageId default is to create a new message)
+        args.splice(1, 0, "create");
     }
-    const [channelId, inMessage, utcOffset, id, textContent] = args;
-    const { guild } = message;
-    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
-    const clockMessage = inMessage ? await channel.send("Creating clock...") : null;
 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
@@ -604,26 +601,58 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }) {
         return;
     }
 
+    const [channelId, messageId, utcOffset, textContent] = args;
+    const { guild } = message;
+
+    // load clock channel
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
     if (channel === undefined) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
 
-    // eslint-disable-next-line use-isnan
-    if (parseFloat(utcOffset) === NaN) {
+    // load clock message
+    let clockMessage;
+    if (inChannelName) {
+        clockMessage = null;
+    }
+    else if (messageId === "create") {
+        clockMessage = await channel.send("Creating clock...");
+    }
+    else {
+        clockMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
+        if (clockMessage === null) {
+            message.reply("Sorry, I couldn't find that message");
+            return;
+        }
+    }
+
+    // check that the utcOffset is valid
+    if (Number.isNaN(parseFloat(utcOffset))) {
         message.reply("Sorry, I couldn't figure out what the utcOffset is. Try something like +13h");
         return;
     }
 
-    const clock = new Clock({
-        id,
+    // stop existing clock
+    const clockId = Clock.id({
+        guild,
+        channel,
+        message: clockMessage,
+    });
+    let clock = clocks.get(clockId);
+    if (clock !== undefined) {
+        clock.stop();
+    }
+
+    // create and start clock
+    clock = new Clock({
         guild,
         channel,
         message:   clockMessage,
         textContent,
         utcOffset: parseFloat(utcOffset),
     });
-    clocks.set(clock.uniqueId, clock);
+    clocks.set(clock.id, clock);
     clock.start();
     await tmhiDatabase.storeClock(clock);
 
@@ -634,6 +663,85 @@ addCommand({
     command: addClock,
     syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset CLOCK_ID "
         + "clockTextFormat https://www.npmjs.com/package/dateformat",
+});
+addCommand({
+    name:    "addClockChannel",
+    command: (...data) => addClock(...data, true),
+    syntax:  "{{prefix}}addClockChannel #.channel utcOffset CLOCK_ID "
+        + "clockTextFormat https://www.npmjs.com/package/dateformat",
+});
+
+/**
+ * Deletes a live clock
+ */
+async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
+    if (args.length !== 1 && args.length !== 2) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}deleteClock #.channel [messageId]`);
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error(author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // check permissions
+    if (!author.hasPermission("CREATE_CLOCKS")) {
+        message.reply("Sorry, to delete clocks/timers/stopwatches you need the CREATE_CLOCKS permission");
+        return;
+    }
+
+    const [channelId, messageId] = args;
+    const { guild } = message;
+
+    // load clock channel
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    if (channel === undefined) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    // load clock message
+    let clockMessage = null;
+    if (messageId) {
+        clockMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
+        if (clockMessage === null) {
+            message.reply("Sorry, I couldn't find that message");
+            return;
+        }
+    }
+
+    // stop and delete clock
+    const clockId = Clock.id({
+        guild,
+        channel,
+        message: clockMessage,
+    });
+    const clock = clocks.get(clockId);
+    clocks.delete(clockId);
+    clock.stop();
+    await tmhiDatabase.deleteClock(clockId);
+
+    message.reply("Deleted clock! It will no longer update");
+}
+addCommand({
+    name:    "deleteClock",
+    command: deleteClock,
+    syntax:  "{{prefix}}deleteClock #.channel [messageId]",
+});
+addCommand({
+    name:    "deleteTimer",
+    command: deleteClock,
+    syntax:  "{{prefix}}deleteTimer #.channel [messageId]",
+});
+addCommand({
+    name:    "deleteStopwatch",
+    command: deleteClock,
+    syntax:  "{{prefix}}deleteStopwatch #.channel [messageId]",
 });
 
 /**
