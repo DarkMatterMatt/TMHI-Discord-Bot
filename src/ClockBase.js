@@ -3,14 +3,12 @@ class ClockBase {
     /**
      * Create a live clock for a guild channel/message
      * @param {Object}  data The clock data
-     * @param {string}  data.id The clock ID
      * @param {string}  data.guild The guild that this clock applies to
      * @param {external:GuildChannel?} data.channel The channel that this clock updates the name of
      * @param {external:Message?} data.message The message that this clock updates the content of
      * @param {string}  data.textContent The clock formatting
      */
     constructor({
-        id,
         guild,
         channel,
         message,
@@ -20,7 +18,6 @@ class ClockBase {
             throw new Error("Channel or Message must be specified.");
         }
         Object.defineProperty(this, "client", { value: guild.client });
-        this.id          = id;
         this.guild       = guild;
         this.channel     = channel;
         this.message     = message;
@@ -80,8 +77,35 @@ class ClockBase {
         return !this.updatesMessage;
     }
 
-    get uniqueId() {
-        return `${this.id}|${this.guild.id}`;
+    /** The clock's unique ID */
+    get id() {
+        return this.constructor.id(this);
+    }
+
+    /** Calculate a clock's ID from a clock-like object or string */
+    static id(clock) {
+        let guildId;
+        let channelId;
+        let messageId;
+
+        // string ID
+        if (typeof clock === "string") {
+            [guildId, channelId, messageId] = clock.split("|");
+        }
+        // guild, channel, message ID's are directly defined
+        else if (clock.guildId !== undefined) {
+            ({ guildId, channelId, messageId } = clock);
+        }
+        // normal clock object
+        else {
+            guildId   = clock.guild.id;
+            channelId = clock.channel.id;
+            messageId = clock.message ? clock.message.id : null;
+        }
+        if (!messageId) {
+            return `${guildId}|${channelId}`;
+        }
+        return `${guildId}|${channelId}|${messageId}`;
     }
 }
 

@@ -127,7 +127,6 @@ CREATE TABLE memberpermissions (
  * Stopwatch: timeStart, timeFinish
  */
 CREATE TABLE clocks (
-    id              VARCHAR(255)    NOT NULL        COMMENT 'Readable id, e.g. UTC_CLOCK',
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     channelid       VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     messageid       VARCHAR(32)     COMMENT 'Discord Snowflake',
@@ -138,7 +137,7 @@ CREATE TABLE clocks (
     timerfinishmessage              VARCHAR(8192),
 
     FOREIGN KEY     (guildid)       REFERENCES guilds(id)   ON DELETE CASCADE,
-    PRIMARY KEY     (id, guildid)
+    PRIMARY KEY     (guildid, channelid, messageid)
 );
 
 /* Settings */
