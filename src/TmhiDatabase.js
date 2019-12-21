@@ -689,7 +689,7 @@ class TmhiDatabase {
         // load clocks from database
         try {
             [rows] = await this.pool.query(`
-                SELECT id, guildid, channelid, messageid, textcontent,
+                SELECT guildid, channelid, messageid, textcontent,
                     utcoffset, timefinish, timestart, timerfinishmessage
                 FROM clocks
             `);
@@ -710,30 +710,32 @@ class TmhiDatabase {
             const guild = client.guilds.get(row.guildid);
             if (guild === undefined) {
                 this.deleteClock({
-                    id:  row.id,
-                    guild,
+                    guildId:   row.guildid,
+                    channelId: row.channelid,
+                    messageId: row.messageid,
                 });
             }
 
             const channel = guild.channels.get(row.channelid);
             if (channel === undefined) {
                 this.deleteClock({
-                    id:  row.id,
-                    guild,
+                    guildId:   row.guildid,
+                    channelId: row.channelid,
+                    messageId: row.messageid,
                 });
             }
 
             // eslint-disable-next-line no-await-in-loop
-            const message = row.message ? await channel.fetchMessage(row.message) : null;
+            const message = row.messageid ? await channel.fetchMessage(row.messageid) : null;
             if (message === undefined) {
                 this.deleteClock({
-                    id:  row.id,
-                    guild,
+                    guildId:   row.guildid,
+                    channelId: row.channelid,
+                    messageId: row.messageid,
                 });
             }
 
             const baseData = {
-                id:          row.id,
                 guild,
                 channel,
                 message,
@@ -782,20 +784,19 @@ class TmhiDatabase {
     async storeClock(clock) {
         // upsert guildsetting entry with setting value and comment
         const query = this.pool.query(`
-            INSERT INTO clocks (id, guildid, channelid, messageid, textcontent,
+            INSERT INTO clocks (guildid, channelid, messageid, textcontent,
                 utcoffset, timefinish, timestart, timerfinishmessage)
-            VALUES (:id, :guildId, :channelId, :messageId, :textContent,
+            VALUES (:guildId, :channelId, :messageId, :textContent,
                 :utcOffset, :timeFinish, :timeStart, :timerFinishMessage)
             ON DUPLICATE KEY
             UPDATE channelid=:channelId, messageid=:messageId, textcontent=:textContent,
                 utcoffset=:utcOffset, timefinish=:timeFinish, timerfinishmessage=:timerFinishMessage
         `, {
-            id:                 clock.id,
             guildId:            clock.guild.id,
             channelId:          clock.channel.id,
             messageId:          clock.message ? clock.message.id : null,
             textContent:        clock.textContent,
-            utcOffset:          clock.utcOffset ? clock.utcOffset * (60 * 60 * 1000) : null,
+            utcOffset:          clock.utcOffset !== undefined ? clock.utcOffset * (60 * 60 * 1000) : null,
             timeFinish:         clock.timeFinish ? clock.timeFinish.getTime() : null,
             timeStart:          clock.timeStart ? clock.timeStart.getTime() : null,
             timerFinishMessage: clock.timerFinishMessage ? clock.timerFinishMessage : null,
@@ -813,12 +814,15 @@ class TmhiDatabase {
 
     /** Delete a clock */
     async deleteClock(clock) {
+        const [guildId, channelId, messageId] = Clock.id(clock).split("|");
+
         return this.pool.query(`
             DELETE FROM clocks
-            WHERE id=:id AND guildid=:guildId
+            WHERE guildid=:guildId AND channelid=:channelId AND messageid=:messageId
         ;`, {
-            id:      clock.id,
-            guildId: clock.guild.id,
+            guildId,
+            channelId,
+            messageId,
         }).catch(e => e);
     }
 }
