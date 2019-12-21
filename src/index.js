@@ -72,6 +72,27 @@ client.on("ready", async () => {
         await tmhiDatabase.syncMemberRoles(newMember);
     });
 
+    /**
+     * New role created.
+     */
+    client.on("roleCreate", async (role) => {
+        await tmhiDatabase.syncGuildRoles(role.guild);
+    });
+
+    /**
+     * Role was deleted.
+     */
+    client.on("roleDelete", async (role) => {
+        await tmhiDatabase.syncGuildRoles(role.guild);
+    });
+
+    /**
+     * A role changed.
+     */
+    client.on("roleUpdate", async (oldRole, newRole) => {
+        await tmhiDatabase.syncGuildRoles(newRole.guild);
+    });
+
     console.log("Finished initialization");
 });
 
