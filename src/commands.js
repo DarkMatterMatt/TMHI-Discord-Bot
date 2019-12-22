@@ -576,7 +576,8 @@ addCommand({
  * Adds a live clock
  */
 async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChannelName = false) {
-    if ((inChannelName && args.length !== 3) || (!inChannelName && args.length !== 4)) {
+    // A clock in channel name must be 3 args. Otherwise can be 3 or 4 args
+    if ((args.length !== 3 && args.length !== 4) || (inChannelName && args.length !== 3)) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}addClock #.channel `
             + `${inChannelName ? "" : "[messageId] "}`
