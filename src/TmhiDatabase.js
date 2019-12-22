@@ -794,7 +794,7 @@ class TmhiDatabase {
         `, {
             guildId:            clock.guild.id,
             channelId:          clock.channel.id,
-            messageId:          clock.message ? clock.message.id : null,
+            messageId:          clock.message ? clock.message.id : "",
             textContent:        clock.textContent,
             utcOffset:          clock.utcOffset !== undefined ? clock.utcOffset * (60 * 60 * 1000) : null,
             timeFinish:         clock.timeFinish ? clock.timeFinish.getTime() : null,

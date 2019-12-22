@@ -654,7 +654,14 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     });
     clocks.set(clock.id, clock);
     clock.start();
-    await tmhiDatabase.storeClock(clock);
+
+    // store clock in database
+    const result = await tmhiDatabase.storeClock(clock);
+    if (result.status !== "success") {
+        console.error(result.error);
+        message.reply("Started clock!");
+        return;
+    }
 
     message.reply("Started clock!");
 }

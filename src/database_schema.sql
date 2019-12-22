@@ -129,7 +129,7 @@ CREATE TABLE memberpermissions (
 CREATE TABLE clocks (
     guildid         VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
     channelid       VARCHAR(32)     NOT NULL        COMMENT 'Discord Snowflake',
-    messageid       VARCHAR(32)     COMMENT 'Discord Snowflake',
+    messageid       VARCHAR(32)     DEFAULT ''      COMMENT 'Discord Snowflake',
     textcontent     VARCHAR(8192)   DEFAULT 'HH:MM',
     utcoffset       BIGINT          COMMENT 'Milliseconds offset',
     timefinish      BIGINT          COMMENT 'Milliseconds since Jan 1, 1970, 00:00:00.000 GMT',
