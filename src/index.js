@@ -36,7 +36,7 @@ client.on("ready", async () => {
     }
     else {
         // failed to load clocks from database
-        console.error(clocks.error);
+        console.error("Failed loading clocks", clocks.error);
     }
 
     // start listening for user commands

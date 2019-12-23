@@ -129,7 +129,7 @@ async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("setDeleteCommandMessage, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -146,7 +146,7 @@ async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, 
     const result = await tmhiDatabase.storeGuildSetting(setting);
     if (result.status !== "success") {
         // database operation failed
-        console.error(result.error);
+        console.error("setDeleteCommandMessage, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -185,7 +185,7 @@ async function set({ tmhiDatabase, message, args, settings, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("set, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -208,7 +208,7 @@ async function set({ tmhiDatabase, message, args, settings, prefix }) {
     const result = await tmhiDatabase.storeGuildSetting(setting);
     if (result.status !== "success") {
         // database operation failed
-        console.error(result.error);
+        console.error("set, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -239,7 +239,7 @@ async function setCommandPrefix({ tmhiDatabase, message, args, settings, prefix 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("setCommandPrefix, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -286,7 +286,7 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("getPermissions, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -321,7 +321,7 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     const member = await tmhiDatabase.loadTmhiMember(guildMember);
     if (member.status !== "success") {
         // failed to load user from database
-        console.error(member.error);
+        console.error("getPermissions, member", member.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -360,7 +360,7 @@ async function createPermission({ tmhiDatabase, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("createPermission, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -382,7 +382,7 @@ async function createPermission({ tmhiDatabase, message, args, prefix }) {
     const result = await tmhiDatabase.createPermission(permission);
     if (result.status !== "success") {
         // failed to load user from database
-        console.error(result.error);
+        console.error("createPermission, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -418,7 +418,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("grantRolePermission, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -449,7 +449,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     const result = await tmhiDatabase.grantRolePermission(role, permission, comment);
     if (result.status !== "success") {
         // failed to load user from database
-        console.error(result.error);
+        console.error("grantRolePermission, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -474,7 +474,7 @@ async function createPoll({ tmhiDatabase, message, args }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("createPoll, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -520,7 +520,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("initiate, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -542,7 +542,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     const member = await tmhiDatabase.loadTmhiMember(guildMember);
     if (member.status !== "success") {
         // failed to load user from database
-        console.error(member.error);
+        console.error("initiate, member", member.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -592,7 +592,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("addClock, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -659,7 +659,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     // store clock in database
     const result = await tmhiDatabase.storeClock(clock);
     if (result.status !== "success") {
-        console.error(result.error);
+        console.error("addClock, result", result.error);
         message.reply("Started clock!");
         return;
     }
@@ -692,7 +692,7 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("deleteClock, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
