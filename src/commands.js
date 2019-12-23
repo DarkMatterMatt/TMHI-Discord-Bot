@@ -5,6 +5,9 @@ const Discord    = require("discord.js");
 const Collection = require("discord.js/src/util/Collection");
 const Permission = require("./Permission");
 const Command    = require("./Command");
+const Clock      = require("./Clock");
+const Timer      = require("./Timer");
+const Stopwatch  = require("./Stopwatch");
 const secrets    = require("./secrets");
 
 const commands = new Collection();
@@ -126,7 +129,7 @@ async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("setDeleteCommandMessage, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -143,7 +146,7 @@ async function setDeleteCommandMessage({ tmhiDatabase, message, args, settings, 
     const result = await tmhiDatabase.storeGuildSetting(setting);
     if (result.status !== "success") {
         // database operation failed
-        console.error(result.error);
+        console.error("setDeleteCommandMessage, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -182,7 +185,7 @@ async function set({ tmhiDatabase, message, args, settings, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("set, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -205,7 +208,7 @@ async function set({ tmhiDatabase, message, args, settings, prefix }) {
     const result = await tmhiDatabase.storeGuildSetting(setting);
     if (result.status !== "success") {
         // database operation failed
-        console.error(result.error);
+        console.error("set, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -236,7 +239,7 @@ async function setCommandPrefix({ tmhiDatabase, message, args, settings, prefix 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("setCommandPrefix, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -283,7 +286,7 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("getPermissions, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -318,7 +321,7 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
     const member = await tmhiDatabase.loadTmhiMember(guildMember);
     if (member.status !== "success") {
         // failed to load user from database
-        console.error(member.error);
+        console.error("getPermissions, member", member.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -357,7 +360,7 @@ async function createPermission({ tmhiDatabase, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("createPermission, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -379,7 +382,7 @@ async function createPermission({ tmhiDatabase, message, args, prefix }) {
     const result = await tmhiDatabase.createPermission(permission);
     if (result.status !== "success") {
         // failed to load user from database
-        console.error(result.error);
+        console.error("createPermission, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -415,7 +418,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("grantRolePermission, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -446,7 +449,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     const result = await tmhiDatabase.grantRolePermission(role, permission, comment);
     if (result.status !== "success") {
         // failed to load user from database
-        console.error(result.error);
+        console.error("grantRolePermission, result", result.error);
         message.reply("Sorry, I failed to save that into the database, go bug @DarkMatterMatt");
         return;
     }
@@ -471,7 +474,7 @@ async function createPoll({ tmhiDatabase, message, args }) {
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("createPoll, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -510,14 +513,14 @@ addCommandAlias("createPoll", "poll");
 async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}initiate @member`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}initiate @member\``);
         return;
     }
 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        console.error(author.error);
+        console.error("initiate, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -539,7 +542,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     const member = await tmhiDatabase.loadTmhiMember(guildMember);
     if (member.status !== "success") {
         // failed to load user from database
-        console.error(member.error);
+        console.error("initiate, member", member.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -567,6 +570,186 @@ addCommand({
     name:    "initiate",
     command: initiate,
     syntax:  "{{prefix}}initiate @.member",
+});
+
+/**
+ * Adds a live clock
+ */
+async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChannelName = false) {
+    // A clock in channel name must be 3 args. Otherwise can be 3 or 4 args
+    if ((args.length !== 3 && args.length !== 4) || (inChannelName && args.length !== 3)) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}addClock #.channel `
+            + `${inChannelName ? "" : "[messageId] "}`
+            + "utcOffset clockTextFormat`. https://www.npmjs.com/package/dateformat");
+        return;
+    }
+    if (args.length === 3) {
+        // fill in optional/missing arg (messageId default is to create a new message)
+        args.splice(1, 0, "create");
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("addClock, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("CREATE_CLOCKS")) {
+        message.reply("Sorry, to create clocks/timers/stopwatches you need the CREATE_CLOCKS permission");
+        return;
+    }
+
+    const [channelId, messageId, utcOffset, textContent] = args;
+    const { guild } = message;
+
+    // load clock channel
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    if (channel === undefined) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    // load clock message
+    let clockMessage;
+    if (inChannelName) {
+        clockMessage = null;
+    }
+    else if (messageId === "create") {
+        clockMessage = await channel.send("Creating clock...");
+    }
+    else {
+        clockMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
+        if (clockMessage === null) {
+            message.reply("Sorry, I couldn't find that message");
+            return;
+        }
+    }
+
+    // check that the utcOffset is valid
+    if (Number.isNaN(parseFloat(utcOffset))) {
+        message.reply("Sorry, I couldn't figure out what the utcOffset is. Try something like +13h");
+        return;
+    }
+
+    // stop existing clock
+    const clockId = Clock.id({
+        guild,
+        channel,
+        message: clockMessage,
+    });
+    let clock = clocks.get(clockId);
+    if (clock !== undefined) {
+        clock.stop();
+    }
+
+    // create and start clock
+    clock = new Clock({
+        guild,
+        channel,
+        message:   clockMessage,
+        textContent,
+        utcOffset: parseFloat(utcOffset),
+    });
+    clocks.set(clock.id, clock);
+    clock.start();
+
+    // store clock in database
+    const result = await tmhiDatabase.storeClock(clock);
+    if (result.status !== "success") {
+        console.error("addClock, result", result.error);
+        message.reply("Started clock!");
+        return;
+    }
+
+    message.reply("Started clock!");
+}
+addCommand({
+    name:    "addClock",
+    command: addClock,
+    syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset CLOCK_ID "
+        + "clockTextFormat https://www.npmjs.com/package/dateformat",
+});
+addCommand({
+    name:    "addClockChannel",
+    command: (...data) => addClock(...data, true),
+    syntax:  "{{prefix}}addClockChannel #.channel utcOffset CLOCK_ID "
+        + "clockTextFormat https://www.npmjs.com/package/dateformat",
+});
+
+/**
+ * Deletes a live clock
+ */
+async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
+    if (args.length !== 1 && args.length !== 2) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}deleteClock #.channel [messageId]`);
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("deleteClock, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // check permissions
+    if (!author.hasPermission("CREATE_CLOCKS")) {
+        message.reply("Sorry, to delete clocks/timers/stopwatches you need the CREATE_CLOCKS permission");
+        return;
+    }
+
+    const [channelId, messageId] = args;
+    const { guild } = message;
+
+    // load clock channel
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    if (channel === undefined) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    // load clock message
+    let clockMessage = null;
+    if (messageId) {
+        clockMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
+        if (clockMessage === null) {
+            message.reply("Sorry, I couldn't find that message");
+            return;
+        }
+    }
+
+    // stop and delete clock
+    const clockId = Clock.id({
+        guild,
+        channel,
+        message: clockMessage,
+    });
+    const clock = clocks.get(clockId);
+    clocks.delete(clockId);
+    clock.stop();
+    await tmhiDatabase.deleteClock(clockId);
+
+    message.reply("Deleted clock! It will no longer update");
+}
+addCommand({
+    name:    "deleteClock",
+    command: deleteClock,
+    syntax:  "{{prefix}}deleteClock #.channel [messageId]",
+});
+addCommand({
+    name:    "deleteTimer",
+    command: deleteClock,
+    syntax:  "{{prefix}}deleteTimer #.channel [messageId]",
+});
+addCommand({
+    name:    "deleteStopwatch",
+    command: deleteClock,
+    syntax:  "{{prefix}}deleteStopwatch #.channel [messageId]",
 });
 
 /**

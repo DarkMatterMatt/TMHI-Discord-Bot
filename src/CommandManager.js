@@ -8,9 +8,10 @@ class CommandManager {
      * @param {external:Client} client The client to catch events from
      * @param {tmhiDatabase} tmhiDatabase The T-MHI database interface
      */
-    constructor(client, tmhiDatabase) {
-        this.client       = client;
+    constructor(client, tmhiDatabase, clocks) {
+        Object.defineProperty(this, "client", { value: client });
         this.tmhiDatabase = tmhiDatabase;
+        this.clocks = clocks;
     }
 
     /**
@@ -31,14 +32,14 @@ class CommandManager {
             const settings = await this.tmhiDatabase.loadGuildSettings(message.guild);
             if (settings.status !== "success") {
                 // failed to load settings from database
-                console.error(settings.error);
+                console.error("startListening => onMessage, settings", settings.error);
                 message.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
                 return;
             }
 
             let prefix = settings.get("COMMAND_PREFIX").value;
             if (prefix === null) {
-                prefix = `${this.client.user}`;
+                prefix = `<@!${this.client.user.id}>`;
             }
 
             // get text content
@@ -47,9 +48,9 @@ class CommandManager {
                 // remove prefix
                 messageContent = message.content.slice(prefix.length);
             }
-            else if (message.content.startsWith(`${this.client.user}`)) {
+            else if (message.content.startsWith(`<@!${this.client.user.id}>`)) {
                 // remove prefix
-                messageContent = message.content.slice(`${this.client.user}`.length);
+                messageContent = message.content.slice(`<@!${this.client.user.id}>`.length);
             }
             // ignore messages that don't start with the specified prefix or @TMHI-Bot
             else {
@@ -76,6 +77,7 @@ class CommandManager {
             // data to pass to the command
             const commandData = {
                 tmhiDatabase: this.tmhiDatabase,
+                clocks:       this.clocks,
                 message,
                 originalCommand,
                 command,
@@ -107,7 +109,7 @@ class CommandManager {
             const settings = await this.tmhiDatabase.loadGuildSettings(member.guild);
             if (settings.status !== "success") {
                 // failed to load settings from database
-                console.error(settings.error);
+                console.error("startListening => onGuildMemberAdd, settings", settings.error);
                 member.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
                 return;
             }

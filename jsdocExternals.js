@@ -33,3 +33,15 @@
  * @external Snowflake
  * @see {@link https://discord.js.org/#/docs/main/stable/typedef/Snowflake Snowflake}
  */
+
+/**
+ * discord.js GuildChannel. Represents a guild channel (i.e. text channels and voice channels).
+ * @external GuildChannel
+ * @see {@link https://discord.js.org/#/docs/main/stable/class/GuildChannel GuildChannel}
+ */
+
+/**
+ * discord.js Message. Represents a message on Discord.
+ * @external Message
+ * @see {@link https://discord.js.org/#/docs/main/stable/class/Message Message}
+ */

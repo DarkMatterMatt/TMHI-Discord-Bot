@@ -1,8 +1,8 @@
-/** A single permission for one or more users from a single guild */
+/** A single command for one or more guilds */
 class Command {
     /**
-     * Create a single permission for one or more users from a single guild
-     * @param {Object} data The permission data
+     * Create a single command for one or more guilds
+     * @param {Object} data The command data
      * @param {string} data.name The pretty name of the command
      * @param {string} data.command The function to execute
      * @param {string} data.description A short function description
@@ -30,7 +30,7 @@ class Command {
     }
 
     /**
-     * The permission ID
+     * The command ID
      * @readonly
      */
     get id() {

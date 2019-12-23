@@ -14,6 +14,7 @@ class Permission {
         comment = "",
         guild,
     } = {}) {
+        Object.defineProperty(this, "client", { value: guild.client });
         this.id      = id;
         this.name    = name || id;
         this.comment = comment;

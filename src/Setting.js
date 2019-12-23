@@ -20,6 +20,7 @@ class Setting {
         guild,
         guildComment,
     } = {}) {
+        Object.defineProperty(this, "client", { value: guild.client });
         this.id           = id;
         this.name         = name || id;
         this._comment     = comment;
