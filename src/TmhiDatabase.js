@@ -783,7 +783,7 @@ class TmhiDatabase {
      */
     async storeClock(clock) {
         // upsert guildsetting entry with setting value and comment
-        const query = this.pool.query(`
+        const query = await this.pool.query(`
             INSERT INTO clocks (guildid, channelid, messageid, textcontent,
                 utcoffset, timefinish, timestart, timerfinishmessage)
             VALUES (:guildId, :channelId, :messageId, :textContent,
