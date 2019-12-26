@@ -714,6 +714,7 @@ class TmhiDatabase {
                     channelId: row.channelid,
                     messageId: row.messageid,
                 });
+                continue;
             }
 
             const channel = guild.channels.get(row.channelid);
@@ -723,6 +724,7 @@ class TmhiDatabase {
                     channelId: row.channelid,
                     messageId: row.messageid,
                 });
+                continue;
             }
 
             // eslint-disable-next-line no-await-in-loop
@@ -733,6 +735,7 @@ class TmhiDatabase {
                     channelId: row.channelid,
                     messageId: row.messageid,
                 });
+                continue;
             }
 
             const baseData = {
