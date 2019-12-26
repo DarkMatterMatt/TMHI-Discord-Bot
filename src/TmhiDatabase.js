@@ -680,8 +680,8 @@ class TmhiDatabase {
     }
 
     /**
-     * Load all clocks (clocks, timers, stopwatches)
-     * @returns {external:Collection<string, Clock|Timer|Stopwatch>} A collection of clocks
+     * Load all clocks, timers and stopwatches
+     * @returns {external:Collection<string, Clock|Timer|Stopwatch>} A collection of clocks, timers and stopwatches
      */
     async loadClocks(client) {
         let rows;
@@ -778,7 +778,7 @@ class TmhiDatabase {
     }
 
     /**
-     * Stores a clock (clock, timer, stopwatche)
+     * Stores a clock, timer or stopwatch
      * @returns {external:Collection<string, Clock|Timer|Stopwatch>} A collection of clocks
      */
     async storeClock(clock) {
@@ -812,11 +812,11 @@ class TmhiDatabase {
         return query;
     }
 
-    /** Delete a clock */
+    /** Delete a clock, timer or stopwatch */
     async deleteClock(clock) {
         const [guildId, channelId, messageId] = Clock.id(clock).split("|");
 
-        return this.pool.query(`
+        const query = await this.pool.query(`
             DELETE FROM clocks
             WHERE guildid=:guildId AND channelid=:channelId AND messageid=:messageId
         ;`, {
@@ -824,6 +824,15 @@ class TmhiDatabase {
             channelId,
             messageId,
         }).catch(e => e);
+
+        if (query instanceof Error) {
+            console.error(query);
+            query.status = "error";
+            query.error  = query;
+            return query;
+        }
+        query.status = "success";
+        return query;
     }
 }
 
