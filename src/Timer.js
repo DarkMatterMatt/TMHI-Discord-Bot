@@ -27,8 +27,8 @@ class Timer extends ClockBase {
             this.stop();
         }
 
-        const diff = new Date() - this.timerFinish;
-        return dateFormat(diff, this.textContent);
+        const diff = this.timeFinish - new Date();
+        return dateFormat(diff, this.textContent, "UTC");
     }
 
     /** Whether the timer is finished or not */

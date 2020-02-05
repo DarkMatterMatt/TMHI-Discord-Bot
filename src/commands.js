@@ -573,6 +573,120 @@ addCommand({
 });
 
 /**
+ * Adds a countdown timer
+ */
+async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChannelName = false) {
+    // A timer in channel name must be 4 args. Otherwise can be 4 or 5 args
+    if ((args.length !== 4 && args.length !== 5) || (inChannelName && args.length !== 4)) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}addTimer #.channel `
+            + `${inChannelName ? "" : "[messageId] "}`
+            + "utcFinishTime clockTextFormat timerfinishmessage`. https://www.npmjs.com/package/dateformat");
+        return;
+    }
+    if (args.length === 4) {
+        // fill in optional/missing arg (messageId default is to create a new message)
+        args.splice(1, 0, "create");
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("addTimer, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("CREATE_CLOCKS")) {
+        message.reply("Sorry, to create clocks/timers/stopwatches you need the CREATE_CLOCKS permission");
+        return;
+    }
+
+    const [channelId, messageId, utcFinishTime, textContent, timerFinishMessage] = args;
+    const { guild } = message;
+
+    // load clock channel
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    if (channel === undefined) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    // load clock message
+    let timerMessage;
+    if (inChannelName) {
+        timerMessage = null;
+    }
+    else if (messageId === "create") {
+        timerMessage = await channel.send("Creating clock...");
+    }
+    else {
+        timerMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
+        if (timerMessage === null) {
+            message.reply("Sorry, I couldn't find that message");
+            return;
+        }
+    }
+
+    // parse the finish time
+    let finishStr = utcFinishTime.toUpperCase();
+    if (!finishStr.match(/[A-Z]+$/) && !finishStr.match(/^\d+$/)) {
+        finishStr += "Z"; // default to UTC timezone
+    }
+    const finishTime = new Date(finishStr);
+    if (Number.isNaN(Number(finishTime))) {
+        message.reply("Sorry, I couldn't figure out what the finish time is. "
+            + "Try something like '7 Jan 2009 05:00:00 PST'");
+        return;
+    }
+
+    // stop existing timer
+    const timerId = Timer.id({
+        guild,
+        channel,
+        message: timerMessage,
+    });
+    let timer = clocks.get(timerId);
+    if (timer !== undefined) {
+        timer.stop();
+    }
+
+    // create and start timer
+    timer = new Timer({
+        guild,
+        channel,
+        message:    timerMessage,
+        textContent,
+        timeFinish: finishTime,
+        timerFinishMessage,
+    });
+    clocks.set(timer.id, timer);
+    timer.start();
+
+    // store clock in database
+    const result = await tmhiDatabase.storeClock(timer);
+    if (result.status !== "success") {
+        console.error("addTimer, result", result.error);
+        message.reply("Failed starting timer! Please ping @DarkMatterMatt");
+        return;
+    }
+
+    message.reply("Started timer!");
+}
+addCommand({
+    name:    "addTimer",
+    command: addTimer,
+    syntax:  "{{prefix}}addTimer #.channel [messageId] utcFinishTime clockTextFormat "
+        + "timerfinishmessage https://www.npmjs.com/package/dateformat",
+});
+addCommand({
+    name:    "addTimerChannel",
+    command: (...data) => addTimer(...data, true),
+    syntax:  "{{prefix}}addTimerChannel #.channel utcFinishTime clockTextFormat "
+        + "timerfinishmessage https://www.npmjs.com/package/dateformat",
+});
+
+/**
  * Adds a live clock
  */
 async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChannelName = false) {
@@ -660,7 +774,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const result = await tmhiDatabase.storeClock(clock);
     if (result.status !== "success") {
         console.error("addClock, result", result.error);
-        message.reply("Started clock!");
+        message.reply("Failed starting clock! Please ping @DarkMatterMatt");
         return;
     }
 
@@ -669,13 +783,13 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
 addCommand({
     name:    "addClock",
     command: addClock,
-    syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset CLOCK_ID "
+    syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset "
         + "clockTextFormat https://www.npmjs.com/package/dateformat",
 });
 addCommand({
     name:    "addClockChannel",
     command: (...data) => addClock(...data, true),
-    syntax:  "{{prefix}}addClockChannel #.channel utcOffset CLOCK_ID "
+    syntax:  "{{prefix}}addClockChannel #.channel utcOffset "
         + "clockTextFormat https://www.npmjs.com/package/dateformat",
 });
 
