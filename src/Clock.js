@@ -22,7 +22,7 @@ class Clock extends ClockBase {
     getFormattedString() {
         const time = new Date();
         time.setHours(time.getHours() + this.utcOffset);
-        return dateFormat(time, this.textContent, 1);
+        return dateFormat(time, this.textContent, "UTC");
     }
 }
 
