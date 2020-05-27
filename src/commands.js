@@ -1,14 +1,15 @@
 /* eslint-disable object-curly-newline */
 
 // imports
-const Discord    = require("discord.js");
+const Discord = require("discord.js");
 const Collection = require("discord.js/src/util/Collection");
+const { convertArrayToCSV } = require("convert-array-to-csv");
 const Permission = require("./Permission");
-const Command    = require("./Command");
-const Clock      = require("./Clock");
-const Timer      = require("./Timer");
-const Stopwatch  = require("./Stopwatch");
-const secrets    = require("./secrets");
+const Command = require("./Command");
+const Clock = require("./Clock");
+const Timer = require("./Timer");
+const Stopwatch = require("./Stopwatch");
+const secrets = require("./secrets");
 
 const commands = new Collection();
 
@@ -41,7 +42,7 @@ function addCommandAlias(id, newId) {
  * @module help
  */
 async function help({ message, args, settings, prefix }) {
-    const embed = new Discord.RichEmbed()
+    const embed = new Discord.MessageEmbed()
         .setTimestamp()
         .setFooter(`T-MHI Bot v${process.env.npm_package_version} by @DarkMatterMatt`);
 
@@ -311,8 +312,11 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    const guildMember = message.guild.members.get(memberIdToFetch);
-    if (guildMember === undefined) {
+    let guildMember;
+    try {
+        guildMember = await message.guild.members.fetch(memberIdToFetch);
+    }
+    catch (error) {
         // no such user in guild
         message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
         return;
@@ -429,7 +433,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
         return;
     }
 
-    const role = message.guild.roles.get(roleId);
+    const role = await message.guild.roles.cache.get(roleId);
     if (role === undefined) {
         // role doesn't exist
         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
@@ -455,7 +459,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     }
 
     // successful database update
-    message.reply(`Granted ${args[1]} to ${message.guild.roles.get(roleId)}`);
+    message.reply(`Granted ${args[1]} to ${await message.guild.roles.fetch(roleId)}`);
 }
 addCommand({
     name:    "grantRolePermission",
@@ -490,7 +494,7 @@ async function createPoll({ tmhiDatabase, message, args }) {
     // send the poll and add reactions
     const poll = await message.channel.send(pollDescription);
     for (const reaction of reactions) {
-        const customCheck = message.guild.emojis.find(e => e.name === reaction);
+        const customCheck = message.guild.emojis.resolve(reaction);
 
         // await so the reactions are in the correct order
         // eslint-disable-next-line no-await-in-loop
@@ -532,7 +536,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    const guildMember = message.guild.members.get(memberIdToFetch);
+    const guildMember = await message.guild.members.fetch(memberIdToFetch);
     if (guildMember === undefined) {
         // no such user in guild
         message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
@@ -550,7 +554,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     const initiateRole = settings.get("INITIATE_ROLE");
     if (initiateRole.enabled) {
         // give member the role
-        member.addRole(initiateRole.idValue);
+        member.roles.add(initiateRole.idValue);
     }
 
     const initiateMessage = settings.get("INITIATE_MESSAGE");
@@ -570,6 +574,120 @@ addCommand({
     name:    "initiate",
     command: initiate,
     syntax:  "{{prefix}}initiate @.member",
+});
+
+/**
+ * Adds a countdown timer
+ */
+async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChannelName = false) {
+    // A timer in channel name must be 4 args. Otherwise can be 4 or 5 args
+    if ((args.length !== 4 && args.length !== 5) || (inChannelName && args.length !== 4)) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}addTimer #.channel `
+            + `${inChannelName ? "" : "[messageId] "}`
+            + "utcFinishTime clockTextFormat timerfinishmessage`. https://www.npmjs.com/package/dateformat");
+        return;
+    }
+    if (args.length === 4) {
+        // fill in optional/missing arg (messageId default is to create a new message)
+        args.splice(1, 0, "create");
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("addTimer, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("CREATE_CLOCKS")) {
+        message.reply("Sorry, to create clocks/timers/stopwatches you need the CREATE_CLOCKS permission");
+        return;
+    }
+
+    const [channelId, messageId, utcFinishTime, textContent, timerFinishMessage] = args;
+    const { guild } = message;
+
+    // load clock channel
+    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    if (channel === undefined) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    // load clock message
+    let timerMessage;
+    if (inChannelName) {
+        timerMessage = null;
+    }
+    else if (messageId === "create") {
+        timerMessage = await channel.send("Creating clock...");
+    }
+    else {
+        timerMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
+        if (timerMessage === null) {
+            message.reply("Sorry, I couldn't find that message");
+            return;
+        }
+    }
+
+    // parse the finish time
+    let finishStr = utcFinishTime.toUpperCase();
+    if (!finishStr.match(/[A-Z]+$/) && !finishStr.match(/^\d+$/)) {
+        finishStr += "Z"; // default to UTC timezone
+    }
+    const finishTime = new Date(finishStr);
+    if (Number.isNaN(Number(finishTime))) {
+        message.reply("Sorry, I couldn't figure out what the finish time is. "
+            + "Try something like '7 Jan 2009 05:00:00 PST'");
+        return;
+    }
+
+    // stop existing timer
+    const timerId = Timer.id({
+        guild,
+        channel,
+        message: timerMessage,
+    });
+    let timer = clocks.get(timerId);
+    if (timer !== undefined) {
+        timer.stop();
+    }
+
+    // create and start timer
+    timer = new Timer({
+        guild,
+        channel,
+        message:    timerMessage,
+        textContent,
+        timeFinish: finishTime,
+        timerFinishMessage,
+    });
+    clocks.set(timer.id, timer);
+    timer.start();
+
+    // store clock in database
+    const result = await tmhiDatabase.storeClock(timer);
+    if (result.status !== "success") {
+        console.error("addTimer, result", result.error);
+        message.reply("Failed starting timer! Please ping @DarkMatterMatt");
+        return;
+    }
+
+    message.reply("Started timer!");
+}
+addCommand({
+    name:    "addTimer",
+    command: addTimer,
+    syntax:  "{{prefix}}addTimer #.channel [messageId] utcFinishTime clockTextFormat "
+        + "timerfinishmessage https://www.npmjs.com/package/dateformat",
+});
+addCommand({
+    name:    "addTimerChannel",
+    command: (...data) => addTimer(...data, true),
+    syntax:  "{{prefix}}addTimerChannel #.channel utcFinishTime clockTextFormat "
+        + "timerfinishmessage https://www.npmjs.com/package/dateformat",
 });
 
 /**
@@ -606,7 +724,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const { guild } = message;
 
     // load clock channel
-    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    const channel = await guild.channels.fetch(channelId.replace(/\D/g, ""));
     if (channel === undefined) {
         message.reply("Sorry, I couldn't find that channel");
         return;
@@ -660,7 +778,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const result = await tmhiDatabase.storeClock(clock);
     if (result.status !== "success") {
         console.error("addClock, result", result.error);
-        message.reply("Started clock!");
+        message.reply("Failed starting clock! Please ping @DarkMatterMatt");
         return;
     }
 
@@ -669,13 +787,13 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
 addCommand({
     name:    "addClock",
     command: addClock,
-    syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset CLOCK_ID "
+    syntax:  "{{prefix}}addClock #.channel [messageId] utcOffset "
         + "clockTextFormat https://www.npmjs.com/package/dateformat",
 });
 addCommand({
     name:    "addClockChannel",
     command: (...data) => addClock(...data, true),
-    syntax:  "{{prefix}}addClockChannel #.channel utcOffset CLOCK_ID "
+    syntax:  "{{prefix}}addClockChannel #.channel utcOffset "
         + "clockTextFormat https://www.npmjs.com/package/dateformat",
 });
 
@@ -707,7 +825,7 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     const { guild } = message;
 
     // load clock channel
-    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    const channel = await guild.channels.fetch(channelId.replace(/\D/g, ""));
     if (channel === undefined) {
         message.reply("Sorry, I couldn't find that channel");
         return;
@@ -750,6 +868,87 @@ addCommand({
     name:    "deleteStopwatch",
     command: deleteClock,
     syntax:  "{{prefix}}deleteStopwatch #.channel [messageId]",
+});
+
+/**
+ * Exports the guild members as a CSV file
+ */
+async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) {
+    const separators = {
+        comma: ",",
+        csv:   ",",
+        ",":   ",",
+        tab:   "\t",
+        tsv:   "\t",
+        caret: "^",
+        "^":   "^",
+    }
+
+    if (args.length === 0) {
+        args.push("csv");
+    }
+    if (args.length !== 1) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportMembers [format]`);
+        return;
+    }
+
+    const [format] = args;
+    if (!Object.keys(separators).includes(format)) {
+        // invalid format
+        message.reply(`Invalid format. Choose one of: ${Object.keys(separators).map(s => `\`${s}\``).join(" ")}`);
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("exportMembers, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // check permissions
+    if (!author.hasPermission("ADMIN")) {
+        message.reply("Sorry, to export members you need the ADMIN permission");
+        return;
+    }
+
+    const { guild } = message;
+
+    await guild.members.fetch();
+    const members = guild.members.cache;
+
+    const toExport = {
+        id:                    m => m.id,
+        displayName:           m => m.displayName,
+        roles:                 m => m.roles.cache.map(r => r.name).join("|"),
+        joinedTimestamp:       m => m.joinedTimestamp,
+        lastMessageTimestamp:  m => m.lastMessage && (m.lastMessage.editedTimestamp || m.lastMessage.createdTimestamp),
+        nickname:              m => m.nickname,
+        username:              m => `${m.user.username}#${m.user.discriminator}`,
+        premiumSinceTimestamp: m => m.premiumSinceTimestamp,
+    };
+
+    const header = Object.keys(toExport);
+    const separator = separators[format];
+    const data = members.map(m => Object.values(toExport).map(fn => fn(m)));
+    const buf = Buffer.from(convertArrayToCSV(data, { header, separator }));
+    const file = new Discord.MessageAttachment(buf, "members.csv");
+
+    // send DM
+    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    dmChannel.send(file);
+
+    // reply so it doesn"t look like the command failed
+    if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+        message.reply("Sent you a DM!");
+    }
+}
+addCommand({
+    name:    "exportMembers",
+    command: exportMembers,
+    syntax:  "{{prefix}}exportMembers [format]",
 });
 
 /**

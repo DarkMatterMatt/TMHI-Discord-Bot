@@ -28,8 +28,10 @@ class Stopwatch extends ClockBase {
             return this.timerFinishMessage;
         }
 
-        const diff = this.timerFinish - new Date();
-        return dateFormat(diff, this.textContent);
+        let diff = this.timerFinish - new Date();
+        // round to nearest minute
+        diff = Math.round(diff / 60e3) * 60e3;
+        return dateFormat(diff, this.textContent, "UTC");
     }
 
     /** Whether the stopwatch is finished or not */

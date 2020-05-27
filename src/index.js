@@ -22,7 +22,7 @@ client.on("ready", async () => {
     const tmhiDatabase = new TmhiDatabase(secrets.database);
     console.log("Connected to database");
 
-    client.guilds.forEach(async (guild) => {
+    client.guilds.cache.forEach(async (guild) => {
         await tmhiDatabase.syncGuild(guild);
     });
 

@@ -1,0 +1,2 @@
+ALTER TABLE clocks MODIFY COLUMN textcontent VARCHAR(4096);
+ALTER TABLE clocks MODIFY COLUMN timerfinishmessage VARCHAR(4096);
