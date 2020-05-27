@@ -3,6 +3,7 @@
 // imports
 const Discord = require("discord.js");
 const Collection = require("discord.js/src/util/Collection");
+const { convertArrayToCSV } = require("convert-array-to-csv");
 const Permission = require("./Permission");
 const Command = require("./Command");
 const Clock = require("./Clock");
@@ -867,6 +868,87 @@ addCommand({
     name:    "deleteStopwatch",
     command: deleteClock,
     syntax:  "{{prefix}}deleteStopwatch #.channel [messageId]",
+});
+
+/**
+ * Exports the guild members as a CSV file
+ */
+async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) {
+    const separators = {
+        comma: ",",
+        csv:   ",",
+        ",":   ",",
+        tab:   "\t",
+        tsv:   "\t",
+        caret: "^",
+        "^":   "^",
+    }
+
+    if (args.length === 0) {
+        args.push("csv");
+    }
+    if (args.length !== 1) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportMembers [format]`);
+        return;
+    }
+
+    const [format] = args;
+    if (!Object.keys(separators).includes(format)) {
+        // invalid format
+        message.reply(`Invalid format. Choose one of: ${Object.keys(separators).map(s => `\`${s}\``).join(" ")}`);
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("exportMembers, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // check permissions
+    if (!author.hasPermission("ADMIN")) {
+        message.reply("Sorry, to export members you need the ADMIN permission");
+        return;
+    }
+
+    const { guild } = message;
+
+    await guild.members.fetch();
+    const members = guild.members.cache;
+
+    const toExport = {
+        id:                    m => m.id,
+        displayName:           m => m.displayName,
+        roles:                 m => m.roles.cache.map(r => r.name).join("|"),
+        joinedTimestamp:       m => m.joinedTimestamp,
+        lastMessageTimestamp:  m => m.lastMessage && (m.lastMessage.editedTimestamp || m.lastMessage.createdTimestamp),
+        nickname:              m => m.nickname,
+        username:              m => `${m.user.username}#${m.user.discriminator}`,
+        premiumSinceTimestamp: m => m.premiumSinceTimestamp,
+    };
+
+    const header = Object.keys(toExport);
+    const separator = separators[format];
+    const data = members.map(m => Object.values(toExport).map(fn => fn(m)));
+    const buf = Buffer.from(convertArrayToCSV(data, { header, separator }));
+    const file = new Discord.MessageAttachment(buf, "members.csv");
+
+    // send DM
+    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    dmChannel.send(file);
+
+    // reply so it doesn"t look like the command failed
+    if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+        message.reply("Sent you a DM!");
+    }
+}
+addCommand({
+    name:    "exportMembers",
+    command: exportMembers,
+    syntax:  "{{prefix}}exportMembers [format]",
 });
 
 /**

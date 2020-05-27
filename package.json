@@ -4,6 +4,7 @@
   "description": "TMHI Discord Bot",
   "main": "src/index.js",
   "dependencies": {
+    "convert-array-to-csv": "^2.0.0",
     "dateformat": "^3.0.3",
     "discord.js": "^12.2.0",
     "mysql2": "^2.1.0"
