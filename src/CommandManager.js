@@ -123,7 +123,7 @@ class CommandManager {
             }
 
             // fetch channel to greet in
-            const channel = member.guild.channels.get(greetingChannel.idValue);
+            const channel = member.guild.channels.resolve(greetingChannel.idValue);
             if (channel === undefined) {
                 console.error(`Could not find greeting channel: ${greetingChannel.value}`);
                 return;

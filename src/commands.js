@@ -1,14 +1,14 @@
 /* eslint-disable object-curly-newline */
 
 // imports
-const Discord    = require("discord.js");
+const Discord = require("discord.js");
 const Collection = require("discord.js/src/util/Collection");
 const Permission = require("./Permission");
-const Command    = require("./Command");
-const Clock      = require("./Clock");
-const Timer      = require("./Timer");
-const Stopwatch  = require("./Stopwatch");
-const secrets    = require("./secrets");
+const Command = require("./Command");
+const Clock = require("./Clock");
+const Timer = require("./Timer");
+const Stopwatch = require("./Stopwatch");
+const secrets = require("./secrets");
 
 const commands = new Collection();
 
@@ -41,7 +41,7 @@ function addCommandAlias(id, newId) {
  * @module help
  */
 async function help({ message, args, settings, prefix }) {
-    const embed = new Discord.RichEmbed()
+    const embed = new Discord.MessageEmbed()
         .setTimestamp()
         .setFooter(`T-MHI Bot v${process.env.npm_package_version} by @DarkMatterMatt`);
 
@@ -311,8 +311,11 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    const guildMember = message.guild.members.get(memberIdToFetch);
-    if (guildMember === undefined) {
+    let guildMember;
+    try {
+        guildMember = await message.guild.members.fetch(memberIdToFetch);
+    }
+    catch (error) {
         // no such user in guild
         message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
         return;
@@ -429,7 +432,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
         return;
     }
 
-    const role = message.guild.roles.get(roleId);
+    const role = await message.guild.roles.cache.get(roleId);
     if (role === undefined) {
         // role doesn't exist
         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
@@ -455,7 +458,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     }
 
     // successful database update
-    message.reply(`Granted ${args[1]} to ${message.guild.roles.get(roleId)}`);
+    message.reply(`Granted ${args[1]} to ${await message.guild.roles.fetch(roleId)}`);
 }
 addCommand({
     name:    "grantRolePermission",
@@ -490,7 +493,7 @@ async function createPoll({ tmhiDatabase, message, args }) {
     // send the poll and add reactions
     const poll = await message.channel.send(pollDescription);
     for (const reaction of reactions) {
-        const customCheck = message.guild.emojis.find(e => e.name === reaction);
+        const customCheck = message.guild.emojis.resolve(reaction);
 
         // await so the reactions are in the correct order
         // eslint-disable-next-line no-await-in-loop
@@ -532,7 +535,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    const guildMember = message.guild.members.get(memberIdToFetch);
+    const guildMember = await message.guild.members.fetch(memberIdToFetch);
     if (guildMember === undefined) {
         // no such user in guild
         message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
@@ -550,7 +553,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     const initiateRole = settings.get("INITIATE_ROLE");
     if (initiateRole.enabled) {
         // give member the role
-        member.addRole(initiateRole.idValue);
+        member.roles.add(initiateRole.idValue);
     }
 
     const initiateMessage = settings.get("INITIATE_MESSAGE");
@@ -720,7 +723,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const { guild } = message;
 
     // load clock channel
-    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    const channel = await guild.channels.fetch(channelId.replace(/\D/g, ""));
     if (channel === undefined) {
         message.reply("Sorry, I couldn't find that channel");
         return;
@@ -821,7 +824,7 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     const { guild } = message;
 
     // load clock channel
-    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
+    const channel = await guild.channels.fetch(channelId.replace(/\D/g, ""));
     if (channel === undefined) {
         message.reply("Sorry, I couldn't find that channel");
         return;

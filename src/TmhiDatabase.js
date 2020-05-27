@@ -159,7 +159,10 @@ class TmhiDatabase {
                 VALUES (:id, :name, :ownerID, :iconURL, :region, :mfaLevel, :verificationLevel, :createdTimestamp)
                 ON DUPLICATE KEY
                 UPDATE name=:name
-            ;`, guild);
+            ;`, {
+                ...guild,
+                iconURL: guild.iconURL(),
+            });
 
             query.status = "success";
             return query;
@@ -246,8 +249,8 @@ class TmhiDatabase {
                 FROM rolepermissions
                 JOIN permissions ON rolepermissions.permissionid=permissions.id
                 WHERE rolepermissions.guildid=?
-                    AND rolepermissions.roleid IN (${Array(guildMember.roles.size).fill("?").join()})
-            ;`, [guildMember.guild.id, ...guildMember.roles.map(r => r.id)]);
+                    AND rolepermissions.roleid IN (${Array(guildMember.roles.cache.size).fill("?").join()})
+            ;`, [guildMember.guild.id, ...guildMember.roles.cache.map(r => r.id)]);
         }
         catch (error) {
             console.error(error);
@@ -341,7 +344,7 @@ class TmhiDatabase {
                 guildId:     role.guild.id,
                 name:        role.name,
                 hexColor:    role.hexColor,
-                permissions: role.permissions,
+                permissions: role.permissions.bitfield,
                 comment,
             });
 
@@ -389,14 +392,14 @@ class TmhiDatabase {
      */
     async syncGuildRoles(guild) {
         // remove roles that no longer exist
-        const result = await this.deleteGuildRolesExcluding(guild, guild.roles);
+        const result = await this.deleteGuildRolesExcluding(guild, guild.roles.cache);
 
         if (result.status !== "success") {
             return result;
         }
 
         // add roles
-        const queries = await Promise.all(guild.roles.map(role => this.storeGuildRole(role).catch(e => e)));
+        const queries = await Promise.all(guild.roles.cache.map(role => this.storeGuildRole(role).catch(e => e)));
 
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
@@ -438,7 +441,8 @@ class TmhiDatabase {
         }
 
         // force update for all users
-        for (const [, member] of guild.members) {
+        await guild.members.fetch();
+        for (const [, member] of guild.members.cache) {
             // check that the user is added to the database
             // eslint-disable-next-line no-await-in-loop
             result = await this.addMember(member);
@@ -569,13 +573,16 @@ class TmhiDatabase {
      */
     async syncMemberRoles(member) {
         // remove roles that the user no longer has
-        const result = await this.deleteMemberRolesExcluding(member, member.roles);
+        const result = await this.deleteMemberRolesExcluding(member, member.roles.cache);
         if (result.status !== "success") {
             return result;
         }
 
         // add roles
-        const queries = await Promise.all(member.roles.map(role => this.storeMemberRole(member, role).catch(e => e)));
+        const queries = await Promise.all(
+            member.roles.cache.map(role => this.storeMemberRole(member, role)
+                .catch(e => e))
+        );
 
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
@@ -707,7 +714,7 @@ class TmhiDatabase {
             // load clock/timer/stopwatch
             let clock;
 
-            const guild = client.guilds.get(row.guildid);
+            const guild = client.guilds.resolve(row.guildid);
             if (guild === undefined) {
                 this.deleteClock({
                     guildId:   row.guildid,
@@ -717,7 +724,7 @@ class TmhiDatabase {
                 continue;
             }
 
-            const channel = guild.channels.get(row.channelid);
+            const channel = guild.channels.resolve(row.channelid);
             if (channel === undefined) {
                 this.deleteClock({
                     guildId:   row.guildid,
@@ -728,7 +735,7 @@ class TmhiDatabase {
             }
 
             // eslint-disable-next-line no-await-in-loop
-            const message = row.messageid ? await channel.fetchMessage(row.messageid) : null;
+            const message = row.messageid ? await channel.messages.fetch(row.messageid) : null;
             if (message === undefined) {
                 this.deleteClock({
                     guildId:   row.guildid,
