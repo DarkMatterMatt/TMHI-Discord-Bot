@@ -724,8 +724,12 @@ class TmhiDatabase {
                 continue;
             }
 
-            const channel = guild.channels.resolve(row.channelid);
-            if (channel == null) {
+            let channel;
+            try {
+                channel = await guild.channels.fetch(row.channelid);
+            }
+            catch (err) {
+                console.error("Failed loading channel", row.channelid);
                 this.deleteClock({
                     guildId:   row.guildid,
                     channelId: row.channelid,
@@ -735,7 +739,15 @@ class TmhiDatabase {
             }
 
             // eslint-disable-next-line no-await-in-loop
-            const message = row.messageid ? await channel.messages.fetch(row.messageid) : null;
+            let message = null;
+            if (row.messageId) {
+                try {
+                    message = await channel.messages.fetch(row.messageid);
+                }
+                catch (err) {
+                    console.error("Failed loading message", row.messageId);
+                }
+            }
             if (message == null) {
                 this.deleteClock({
                     guildId:   row.guildid,

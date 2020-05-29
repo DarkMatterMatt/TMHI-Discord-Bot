@@ -50,7 +50,7 @@ async function help({ message, args, settings, prefix }) {
         // show help for a single command
         const command = commands.get(args[0]);
 
-        if (command === undefined) {
+        if (command == null) {
             // command does not exist
             embed
                 .setTitle("T-MHI Bot Help")
@@ -198,7 +198,7 @@ async function set({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     const setting = settings.get(settingId);
-    if (settings === undefined) {
+    if (settings == null) {
         // incorrect setting id
         message.reply("Sorry, I couldn't find that setting id!");
         return;
@@ -312,6 +312,12 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
+    if (memberIdToFetch.length < 17 || 19 < memberIdToFetch.length) {
+        // invalid snowflake
+        message.reply("Invalid user. Please tag them, @user");
+        return;
+    }
+
     let guildMember;
     try {
         guildMember = await message.guild.members.fetch(memberIdToFetch);
@@ -434,7 +440,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     }
 
     const role = await message.guild.roles.cache.get(roleId);
-    if (role === undefined) {
+    if (role == null) {
         // role doesn't exist
         message.reply("Sorry, I couldn't find that role. Try using the RoleId instead?");
         return;
@@ -459,7 +465,7 @@ async function grantRolePermission({ tmhiDatabase, message, args, prefix }) {
     }
 
     // successful database update
-    message.reply(`Granted ${args[1]} to ${await message.guild.roles.fetch(roleId)}`);
+    message.reply(`Granted ${args[1]} to ${role}`);
 }
 addCommand({
     name:    "grantRolePermission",
@@ -474,7 +480,16 @@ addCommand({
  * @param {string} pollDescription The poll description to echo
  * @param {...string} reactions Any number of parameters, one reaction each
  */
-async function createPoll({ tmhiDatabase, message, args }) {
+async function createPoll({ tmhiDatabase, message, args, prefix }) {
+    if (args.length === 0) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}createPoll \"poll description\" [reaction1] [reaction2] ...`);
+        return;
+    }
+    if (args.length === 1) {
+        args.push("👍", "👎");
+    }
+
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
@@ -488,17 +503,24 @@ async function createPoll({ tmhiDatabase, message, args }) {
         return;
     }
 
-    const [pollDescription] = args;
-    const reactions = args.length === 1 ? ["👍", "👎"] : args.slice(1);
+    const [pollDescription, ...reactions] = args;
 
     // send the poll and add reactions
     const poll = await message.channel.send(pollDescription);
     for (const reaction of reactions) {
         const customCheck = message.guild.emojis.resolve(reaction);
 
-        // await so the reactions are in the correct order
-        // eslint-disable-next-line no-await-in-loop
-        await poll.react(customCheck ? customCheck.id : reaction);
+        try {
+            // await so the reactions are in the correct order
+            // eslint-disable-next-line no-await-in-loop
+            await poll.react(customCheck ? customCheck.id : reaction);
+        }
+        catch (err) {
+            // invalid reaction
+            poll.delete();
+            message.reply("Invalid reaction.");
+            return;
+        }
     }
 
     // always delete poll creation messages (because they're almost directly echoed back to the server)
@@ -536,8 +558,17 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    const guildMember = await message.guild.members.fetch(memberIdToFetch);
-    if (guildMember === undefined) {
+    if (memberIdToFetch.length < 17 || 19 < memberIdToFetch.length) {
+        // invalid snowflake
+        message.reply("Invalid user. Please tag them, @user");
+        return;
+    }
+
+    let guildMember;
+    try {
+        guildMember = await message.guild.members.fetch(memberIdToFetch);
+    }
+    catch (err) {
         // no such user in guild
         message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
         return;
@@ -609,9 +640,31 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const [channelId, messageId, utcFinishTime, textContent, timerFinishMessage] = args;
     const { guild } = message;
 
+    // parse the finish time
+    let finishStr = utcFinishTime.toUpperCase();
+    if (!finishStr.match(/[A-Z]+$/) && !finishStr.match(/^\d+$/)) {
+        finishStr += "Z"; // default to UTC timezone
+    }
+    const finishTime = new Date(finishStr);
+    if (Number.isNaN(Number(finishTime))) {
+        message.reply("Sorry, I couldn't figure out what the finish time is. "
+            + "Try something like '7 Jan 2009 05:00:00 PST'");
+        return;
+    }
+
     // load clock channel
-    const channel = guild.channels.get(channelId.replace(/\D/g, ""));
-    if (channel === undefined) {
+    const channelIdToFetch = channelId.replace(/\D/g, "");
+    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+        // invalid snowflake
+        message.reply("Invalid message. Please copy the correct ID");
+        return;
+    }
+
+    let channel;
+    try {
+        channel = await member.guild.channels.fetch(greetingChannel.idValue);
+    }
+    catch (err) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
@@ -625,23 +678,26 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
         timerMessage = await channel.send("Creating clock...");
     }
     else {
-        timerMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
-        if (timerMessage === null) {
+        const messageIdToFetch = messageId.replace(/\D/g, "");
+        if (messageIdToFetch.length < 17 || 19 < messageIdToFetch.length) {
+            // invalid snowflake
+            message.reply("Invalid message. Please copy the correct ID");
+            return;
+        }
+    
+        try {
+            timerMessage = await channel.messages.fetch(messageIdToFetch);
+        }
+        catch (err) {
+            // no such message in channel
             message.reply("Sorry, I couldn't find that message");
             return;
         }
-    }
 
-    // parse the finish time
-    let finishStr = utcFinishTime.toUpperCase();
-    if (!finishStr.match(/[A-Z]+$/) && !finishStr.match(/^\d+$/)) {
-        finishStr += "Z"; // default to UTC timezone
-    }
-    const finishTime = new Date(finishStr);
-    if (Number.isNaN(Number(finishTime))) {
-        message.reply("Sorry, I couldn't figure out what the finish time is. "
-            + "Try something like '7 Jan 2009 05:00:00 PST'");
-        return;
+        if (timerMessage.author.id !== guild.client.user.id) {
+            message.reply("Sorry, I can only edit my own messages");
+            return;
+        }
     }
 
     // stop existing timer
@@ -651,7 +707,7 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
         message: timerMessage,
     });
     let timer = clocks.get(timerId);
-    if (timer !== undefined) {
+    if (timer !== null) {
         timer.stop();
     }
 
@@ -723,9 +779,25 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     const [channelId, messageId, utcOffset, textContent] = args;
     const { guild } = message;
 
+    // check that the utcOffset is valid
+    if (Number.isNaN(parseFloat(utcOffset))) {
+        message.reply("Sorry, I couldn't figure out what the utcOffset is. Try something like +13h");
+        return;
+    }
+
     // load clock channel
-    const channel = await guild.channels.fetch(channelId.replace(/\D/g, ""));
-    if (channel === undefined) {
+    const channelIdToFetch = channelId.replace(/\D/g, "");
+    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+        // invalid snowflake
+        message.reply("Invalid message. Please copy the correct ID");
+        return;
+    }
+
+    let channel;
+    try {
+        channel = await member.guild.channels.fetch(channelIdToFetch);
+    }
+    catch (err) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
@@ -739,17 +811,26 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
         clockMessage = await channel.send("Creating clock...");
     }
     else {
-        clockMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
-        if (clockMessage === null) {
+        const messageIdToFetch = messageId.replace(/\D/g, "");
+        if (messageIdToFetch.length < 17 || 19 < messageIdToFetch.length) {
+            // invalid snowflake
+            message.reply("Invalid message. Please copy the correct ID");
+            return;
+        }
+
+        try {
+            clockMessage = await channel.messages.fetch(messageIdToFetch);
+        }
+        catch (err) {
+            // no such message in channel
             message.reply("Sorry, I couldn't find that message");
             return;
         }
-    }
 
-    // check that the utcOffset is valid
-    if (Number.isNaN(parseFloat(utcOffset))) {
-        message.reply("Sorry, I couldn't figure out what the utcOffset is. Try something like +13h");
-        return;
+        if (clockMessage.author.id !== guild.client.user.id) {
+            message.reply("Sorry, I can only edit my own messages");
+            return;
+        }
     }
 
     // stop existing clock
@@ -759,7 +840,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
         message: clockMessage,
     });
     let clock = clocks.get(clockId);
-    if (clock !== undefined) {
+    if (clock != null) {
         clock.stop();
     }
 
@@ -825,8 +906,18 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     const { guild } = message;
 
     // load clock channel
-    const channel = await guild.channels.fetch(channelId.replace(/\D/g, ""));
-    if (channel === undefined) {
+    const channelIdToFetch = channelId.replace(/\D/g, "");
+    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+        // invalid snowflake
+        message.reply("Invalid message. Please copy the correct ID");
+        return;
+    }
+
+    let channel;
+    try {
+        channel = await member.guild.channels.fetch(channelIdToFetch);
+    }
+    catch (err) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
@@ -834,8 +925,18 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     // load clock message
     let clockMessage = null;
     if (messageId) {
-        clockMessage = await channel.fetchMessage(messageId.replace(/\D/g, ""));
-        if (clockMessage === null) {
+        const messageIdToFetch = messageId.replace(/\D/g, "");
+        if (messageIdToFetch.length < 17 || 19 < messageIdToFetch.length) {
+            // invalid snowflake
+            message.reply("Invalid message. Please copy the correct ID");
+            return;
+        }
+
+        try {
+            clockMessage = await channel.messages.fetch(messageIdToFetch);
+        }
+        catch (err) {
+            // no such message in channel
             message.reply("Sorry, I couldn't find that message");
             return;
         }
@@ -926,7 +1027,7 @@ async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) 
         joinedTimestamp:       m => m.joinedTimestamp,
         lastMessageTimestamp:  m => m.lastMessage && (m.lastMessage.editedTimestamp || m.lastMessage.createdTimestamp),
         nickname:              m => m.nickname,
-        username:              m => `${m.user.username}#${m.user.discriminator}`,
+        username:              m => m.user.tag,
         premiumSinceTimestamp: m => m.premiumSinceTimestamp,
     };
 
