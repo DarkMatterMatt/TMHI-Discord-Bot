@@ -29,7 +29,7 @@ class TmhiDatabase {
     async storeGuildSettings(settings) {
         const queries = await Promise.all(settings.map(async (setting) => {
             // delete guildsetting entry if using default values
-            if (setting.rawValue === undefined || setting.rawValue === null || setting.rawValue === "default") {
+            if (setting.rawValue == null || setting.rawValue === "default") {
                 return this.pool.query(`
                     DELETE FROM guildsettings
                     WHERE guildid=:guildId AND settingid=:settingId
@@ -715,7 +715,7 @@ class TmhiDatabase {
             let clock;
 
             const guild = client.guilds.resolve(row.guildid);
-            if (guild === undefined) {
+            if (guild == null) {
                 this.deleteClock({
                     guildId:   row.guildid,
                     channelId: row.channelid,
@@ -725,7 +725,7 @@ class TmhiDatabase {
             }
 
             const channel = guild.channels.resolve(row.channelid);
-            if (channel === undefined) {
+            if (channel == null) {
                 this.deleteClock({
                     guildId:   row.guildid,
                     channelId: row.channelid,
@@ -736,7 +736,7 @@ class TmhiDatabase {
 
             // eslint-disable-next-line no-await-in-loop
             const message = row.messageid ? await channel.messages.fetch(row.messageid) : null;
-            if (message === undefined) {
+            if (message == null) {
                 this.deleteClock({
                     guildId:   row.guildid,
                     channelId: row.channelid,
