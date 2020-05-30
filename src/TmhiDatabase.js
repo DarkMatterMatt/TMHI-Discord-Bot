@@ -735,10 +735,10 @@ class TmhiDatabase {
                 continue;
             }
 
-            // eslint-disable-next-line no-await-in-loop
             let message = null;
             if (row.messageId) {
                 try {
+                    // eslint-disable-next-line no-await-in-loop
                     message = await channel.messages.fetch(row.messageid);
                 }
                 catch (err) {

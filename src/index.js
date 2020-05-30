@@ -2,7 +2,7 @@
 
 // crash Node on unhandled promise rejections
 process.on("unhandledRejection", up => {
-    console.error("Time: " + new Date());
+    console.error(`Time: ${new Date()}`);
     throw up;
 });
 

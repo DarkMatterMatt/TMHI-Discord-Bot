@@ -312,7 +312,7 @@ async function getPermissions({ tmhiDatabase, message, args, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    if (memberIdToFetch.length < 17 || 19 < memberIdToFetch.length) {
+    if (memberIdToFetch.length < 17 || memberIdToFetch.length > 19) {
         // invalid snowflake
         message.reply("Invalid user. Please tag them, @user");
         return;
@@ -483,7 +483,8 @@ addCommand({
 async function createPoll({ tmhiDatabase, message, args, prefix }) {
     if (args.length === 0) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}createPoll \"poll description\" [reaction1] [reaction2] ...`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}createPoll `
+            + "\"poll description\" [reaction1] [reaction2] ...");
         return;
     }
     if (args.length === 1) {
@@ -558,7 +559,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     // load requested tmhiMember
     const memberIdToFetch = args[0].replace(/\D/g, "");
-    if (memberIdToFetch.length < 17 || 19 < memberIdToFetch.length) {
+    if (memberIdToFetch.length < 17 || memberIdToFetch.length > 19) {
         // invalid snowflake
         message.reply("Invalid user. Please tag them, @user");
         return;
@@ -654,7 +655,7 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
 
     // load clock channel
     const channelIdToFetch = channelId.replace(/\D/g, "");
-    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+    if (channelIdToFetch.length < 17 || channelIdToFetch.length > 19) {
         // invalid snowflake
         message.reply("Invalid message. Please copy the correct ID");
         return;
@@ -676,12 +677,12 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
     }
     else {
         const messageIdToFetch = messageId.replace(/\D/g, "");
-        if (messageIdToFetch.length < 17 || 19 < messageIdToFetch.length) {
+        if (messageIdToFetch.length < 17 || messageIdToFetch.length > 19) {
             // invalid snowflake
             message.reply("Invalid message. Please copy the correct ID");
             return;
         }
-    
+
         try {
             timerMessage = await channel.messages.fetch(messageIdToFetch);
         }
@@ -784,7 +785,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
 
     // load clock channel
     const channelIdToFetch = channelId.replace(/\D/g, "");
-    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+    if (channelIdToFetch.length < 17 || channelIdToFetch.length > 19) {
         // invalid snowflake
         message.reply("Invalid message. Please copy the correct ID");
         return;
@@ -806,7 +807,7 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
     }
     else {
         const messageIdToFetch = messageId.replace(/\D/g, "");
-        if (messageIdToFetch.length < 17 || 19 < messageIdToFetch.length) {
+        if (messageIdToFetch.length < 17 || messageIdToFetch.length > 19) {
             // invalid snowflake
             message.reply("Invalid message. Please copy the correct ID");
             return;
@@ -901,7 +902,7 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
 
     // load clock channel
     const channelIdToFetch = channelId.replace(/\D/g, "");
-    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+    if (channelIdToFetch.length < 17 || channelIdToFetch.length > 19) {
         // invalid snowflake
         message.reply("Invalid message. Please copy the correct ID");
         return;
@@ -917,7 +918,7 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     let clockMessage = null;
     if (messageId) {
         const messageIdToFetch = messageId.replace(/\D/g, "");
-        if (messageIdToFetch.length < 17 || 19 < messageIdToFetch.length) {
+        if (messageIdToFetch.length < 17 || messageIdToFetch.length > 19) {
             // invalid snowflake
             message.reply("Invalid message. Please copy the correct ID");
             return;
@@ -975,7 +976,7 @@ async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) 
         tsv:   "\t",
         caret: "^",
         "^":   "^",
-    }
+    };
 
     if (args.length === 0) {
         args.push("csv");
@@ -1059,7 +1060,7 @@ async function exportChannelMessages({ tmhiDatabase, message, args, prefix, sett
         tsv:   "\t",
         caret: "^",
         "^":   "^",
-    }
+    };
 
     if (args.length === 1) {
         args.push("csv");
@@ -1078,7 +1079,7 @@ async function exportChannelMessages({ tmhiDatabase, message, args, prefix, sett
     }
 
     const channelIdToFetch = channelId.replace(/\D/g, "");
-    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+    if (channelIdToFetch.length < 17 || channelIdToFetch.length > 19) {
         // invalid snowflake
         message.reply("Invalid message. Please copy the correct ID");
         return;

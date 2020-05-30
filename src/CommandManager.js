@@ -123,8 +123,7 @@ class CommandManager {
             }
 
             // fetch channel to greet in
-
-            const channel = guild.channels.resolve(greetingChannel.idValue);
+            const channel = member.guild.channels.resolve(greetingChannel.idValue);
             if (channel == null) {
                 console.error(`Failed fetching greeting channel: ${greetingChannel.value}`);
                 return;
