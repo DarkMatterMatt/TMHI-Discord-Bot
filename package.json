@@ -1,6 +1,6 @@
 {
   "name": "tmhi-discord-bot",
-  "version": "3.7.3",
+  "version": "3.8.0-b1",
   "description": "TMHI Discord Bot",
   "main": "src/index.js",
   "dependencies": {

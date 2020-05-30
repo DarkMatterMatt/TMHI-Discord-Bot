@@ -1045,6 +1045,102 @@ addCommand({
 });
 
 /**
+ * Export a channel's messages as a CSV file
+ * @param channel the channel to export
+ * @param format optional csv delimiter ([comma]/tab/caret)
+ */
+async function exportChannelMessages({ tmhiDatabase, message, args, prefix, settings }) {
+    const { guild } = message;
+    const separators = {
+        comma: ",",
+        csv:   ",",
+        ",":   ",",
+        tab:   "\t",
+        tsv:   "\t",
+        caret: "^",
+        "^":   "^",
+    }
+
+    if (args.length === 1) {
+        args.push("csv");
+    }
+    if (args.length !== 2) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportChannelMessages #channel [format]`);
+        return;
+    }
+
+    const [channelId, format] = args;
+    if (!Object.keys(separators).includes(format)) {
+        // invalid format
+        message.reply(`Invalid format. Choose one of: ${Object.keys(separators).map(s => `\`${s}\``).join(" ")}`);
+        return;
+    }
+
+    const channelIdToFetch = channelId.replace(/\D/g, "");
+    if (channelIdToFetch.length < 17 || 19 < channelIdToFetch.length) {
+        // invalid snowflake
+        message.reply("Invalid message. Please copy the correct ID");
+        return;
+    }
+
+    const channel = guild.channels.resolve(channelIdToFetch);
+    if (channel == null) {
+        message.reply("Sorry, I couldn't find that channel");
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        console.error("exportChannelMessages, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // check permissions
+    if (!author.hasPermission("ADMIN")) {
+        message.reply("Sorry, to export a channel you need the ADMIN permission");
+        return;
+    }
+
+    await channel.messages.fetch();
+    const messages = channel.messages.cache;
+
+    const toExport = {
+        author:            m => m.author.tag,
+        createdTimestamp:  m => m.createdTimestamp,
+        editedTimestamp:   m => m.editedTimestamp,
+        content:           m => m.content,
+        mentionedEveryone: m => m.mentions.everyone,
+        mentionedChannels: m => m.mentions.channels.map(c => c.name).join("|"),
+        mentionedMembers:  m => m.mentions.members.map(n => n.displayName).join("|"),
+        mentionedRoles:    m => m.mentions.roles.map(r => r.name).join("|"),
+    };
+
+    const header = Object.keys(toExport);
+    const separator = separators[format];
+    const data = messages.map(m => Object.values(toExport).map(fn => fn(m)));
+    const buf = Buffer.from(convertArrayToCSV(data, { header, separator }));
+    const file = new Discord.MessageAttachment(buf, "channel.csv");
+
+    // send DM
+    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    dmChannel.send(file);
+
+    // reply so it doesn"t look like the command failed
+    if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+        message.reply("Sent you a DM!");
+    }
+}
+addCommand({
+    name:    "exportChannelMessages",
+    command: exportChannelMessages,
+    syntax:  "{{prefix}}exportChannelMessages #channel [format]",
+});
+addCommandAlias("exportChannelMessages", "exportChannel");
+
+/**
  * Invalid command, send a direct message to the member with the help text
  * @category Commands
  * @module invalidCommand
