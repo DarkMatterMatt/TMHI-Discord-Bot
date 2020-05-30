@@ -724,11 +724,8 @@ class TmhiDatabase {
                 continue;
             }
 
-            let channel;
-            try {
-                channel = await guild.channels.fetch(row.channelid);
-            }
-            catch (err) {
+            const channel = guild.channels.resolve(row.channelid);
+            if (channel == null) {
                 console.error("Failed loading channel", row.channelid);
                 this.deleteClock({
                     guildId:   row.guildid,

@@ -123,11 +123,9 @@ class CommandManager {
             }
 
             // fetch channel to greet in
-            let channel;
-            try {
-                channel = await member.guild.channels.fetch(greetingChannel.idValue);
-            }
-            catch (err) {
+
+            const channel = guild.channels.resolve(greetingChannel.idValue);
+            if (channel == null) {
                 console.error(`Failed fetching greeting channel: ${greetingChannel.value}`);
                 return;
             }

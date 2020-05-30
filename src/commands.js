@@ -660,11 +660,8 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
         return;
     }
 
-    let channel;
-    try {
-        channel = await member.guild.channels.fetch(greetingChannel.idValue);
-    }
-    catch (err) {
+    const channel = guild.channels.resolve(channelIdToFetch);
+    if (channel == null) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
@@ -793,11 +790,8 @@ async function addClock({ tmhiDatabase, clocks, message, args, prefix }, inChann
         return;
     }
 
-    let channel;
-    try {
-        channel = await member.guild.channels.fetch(channelIdToFetch);
-    }
-    catch (err) {
+    const channel = guild.channels.resolve(channelIdToFetch);
+    if (channel == null) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
@@ -913,11 +907,8 @@ async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
         return;
     }
 
-    let channel;
-    try {
-        channel = await member.guild.channels.fetch(channelIdToFetch);
-    }
-    catch (err) {
+    const channel = guild.channels.resolve(channelIdToFetch);
+    if (channel == null) {
         message.reply("Sorry, I couldn't find that channel");
         return;
     }
@@ -973,6 +964,7 @@ addCommand({
 
 /**
  * Exports the guild members as a CSV file
+ * @param format optional csv delimiter ([comma]/tab/caret)
  */
 async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) {
     const separators = {
