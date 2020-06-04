@@ -88,7 +88,7 @@ async function help({ message, args, settings, prefix }) {
     const dmChannel = message.author.dmChannel || await message.author.createDM();
     dmChannel.send(embed);
 
-    // reply so it doesn"t look like the command failed
+    // reply so it doesn't look like the command failed
     if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
         message.reply("Sent you a DM!");
     }
@@ -483,7 +483,8 @@ addCommand({
 async function createPoll({ tmhiDatabase, message, args, prefix }) {
     if (args.length === 0) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}createPoll \"poll description\" [reaction1] [reaction2] ...`);
+        message.reply("Invalid syntax. Syntax is: "
+            + `\`${prefix}createPoll "poll description" [reaction1] [reaction2] ...`);
         return;
     }
     if (args.length === 1) {
@@ -681,7 +682,7 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
             message.reply("Invalid message. Please copy the correct ID");
             return;
         }
-    
+
         try {
             timerMessage = await channel.messages.fetch(messageIdToFetch);
         }
@@ -975,7 +976,7 @@ async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) 
         tsv:   "\t",
         caret: "^",
         "^":   "^",
-    }
+    };
 
     if (args.length === 0) {
         args.push("csv");
@@ -1033,7 +1034,7 @@ async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) 
     const dmChannel = message.author.dmChannel || await message.author.createDM();
     dmChannel.send(file);
 
-    // reply so it doesn"t look like the command failed
+    // reply so it doesn't look like the command failed
     if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
         message.reply("Sent you a DM!");
     }
@@ -1046,10 +1047,13 @@ addCommand({
 
 /**
  * Export a channel's messages as a CSV file
- * @param channel the channel to export
- * @param format optional csv delimiter ([comma]/tab/caret)
+ * @param channel  the channel to export
+ * @param format   optional csv delimiter ([comma]/tab/caret)
+ * @param beforeId only load messages before this message ID
  */
 async function exportChannelMessages({ tmhiDatabase, message, args, prefix, settings }) {
+    const MAX_MESSAGES_PER_EXPORT = 10000;
+
     const { guild } = message;
     const separators = {
         comma: ",",
@@ -1059,21 +1063,40 @@ async function exportChannelMessages({ tmhiDatabase, message, args, prefix, sett
         tsv:   "\t",
         caret: "^",
         "^":   "^",
-    }
+    };
 
     if (args.length === 1) {
         args.push("csv");
+        args.push(undefined);
     }
-    if (args.length !== 2) {
+    else if (args.length === 2) {
+        // second arg is `format`
+        if (Object.keys(separators).includes(args[1])) {
+            args.push(undefined);
+        }
+        // assume second arg is `beforeId`
+        else {
+            args.splice(1, 0, "csv");
+        }
+    }
+    if (args.length !== 3) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportChannelMessages #channel [format]`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportChannelMessages #channel [format] [beforeId]`);
         return;
     }
 
     const [channelId, format] = args;
+    let beforeMessageId = args[2];
+
     if (!Object.keys(separators).includes(format)) {
         // invalid format
         message.reply(`Invalid format. Choose one of: ${Object.keys(separators).map(s => `\`${s}\``).join(" ")}`);
+        return;
+    }
+
+    if (beforeMessageId !== undefined && !beforeMessageId.match(/\d{17,19}/)) {
+        // invalid format
+        message.reply("Invalid message ID. Right-click on a message and select 'Copy ID'.");
         return;
     }
 
@@ -1104,9 +1127,6 @@ async function exportChannelMessages({ tmhiDatabase, message, args, prefix, sett
         return;
     }
 
-    await channel.messages.fetch();
-    const messages = channel.messages.cache;
-
     const toExport = {
         author:            m => m.author.tag,
         createdTimestamp:  m => m.createdTimestamp,
@@ -1118,19 +1138,46 @@ async function exportChannelMessages({ tmhiDatabase, message, args, prefix, sett
         mentionedRoles:    m => m.mentions.roles.map(r => r.name).join("|"),
     };
 
+    // send DM to say that we're starting - it may take a while
+    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    const reply = await message.reply("Export is starting, it could take up to a minute so please be patient 🙂");
+
+    let data = [];
+    let messages;
+    let totalMessagesExported = 0;
+
+    do {
+        // eslint-disable-next-line no-await-in-loop
+        messages = await channel.messages.fetch({
+            limit:  100,
+            before: beforeMessageId,
+        }, false);
+
+        beforeMessageId = Math.min(...messages.keys());
+        totalMessagesExported += messages.size;
+        data = data.concat(messages.map(m => Object.values(toExport).map(fn => fn(m))));
+    } while (messages.size === 100 && totalMessagesExported < MAX_MESSAGES_PER_EXPORT);
+
     const header = Object.keys(toExport);
     const separator = separators[format];
-    const data = messages.map(m => Object.values(toExport).map(fn => fn(m)));
     const buf = Buffer.from(convertArrayToCSV(data, { header, separator }));
     const file = new Discord.MessageAttachment(buf, "channel.csv");
 
-    // send DM
-    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    // send file
     dmChannel.send(file);
 
-    // reply so it doesn"t look like the command failed
-    if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
-        message.reply("Sent you a DM!");
+    if (totalMessagesExported >= MAX_MESSAGES_PER_EXPORT) {
+        dmChannel.send(`I only exported the latest ${totalMessagesExported} items, to export more run `
+            + `\`${prefix}exportChannelMessages ${channel} "${format}" ${beforeMessageId}\``);
+    }
+
+    // delete our temporary reply
+    if (settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+        reply.delete();
+    }
+    // modify our temporary message
+    else {
+        reply.edit("Sent you a DM!");
     }
 }
 addCommand({
