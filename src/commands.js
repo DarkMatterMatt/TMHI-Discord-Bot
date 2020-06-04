@@ -499,7 +499,7 @@ async function createPoll({ tmhiDatabase, message, args, prefix }) {
     if (args.length === 0) {
         // incorrect number of arguments
         message.reply("Invalid syntax. Syntax is: "
-            + `\`${prefix}createPoll "poll description" [reaction1] [reaction2] ...`);
+            + `\`${prefix}createPoll "poll description" [reaction1] [reaction2] ...\``);
         return;
     }
     if (args.length === 1) {
@@ -894,7 +894,7 @@ addCommand({
 async function deleteClock({ tmhiDatabase, clocks, message, args, prefix }) {
     if (args.length !== 1 && args.length !== 2) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}deleteClock #.channel [messageId]`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}deleteClock #.channel [messageId]\``);
         return;
     }
 
@@ -998,7 +998,7 @@ async function exportMembers({ tmhiDatabase, message, args, prefix, settings }) 
     }
     if (args.length !== 1) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportMembers [format]`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportMembers [format]\``);
         return;
     }
 
@@ -1089,14 +1089,15 @@ async function exportChannelMessages({ tmhiDatabase, message, args, prefix, sett
         if (Object.keys(separators).includes(args[1])) {
             args.push(undefined);
         }
-        // assume second arg is `beforeId`
-        else {
+        // second arg is `beforeId`
+        else if (parseSnowflake(args[1])) {
             args.splice(1, 0, "csv");
         }
+        // else reply with syntax
     }
     if (args.length !== 3) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportChannelMessages #channel [format] [beforeId]`);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}exportChannelMessages #channel [format] [beforeId]\``);
         return;
     }
 
