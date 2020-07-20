@@ -45,7 +45,7 @@ class ClockBase {
         return this.message.edit(formattedString);
     }
 
-    /** Loop every minute */
+    /** Loop regularly, every minute for messages and every 10 mins for channel names */
     loop() {
         if (this._stop) {
             return;
@@ -53,9 +53,9 @@ class ClockBase {
 
         this.update();
 
-        const nextUpdate = new Date();
-        nextUpdate.setMinutes(nextUpdate.getMinutes() + 1, 0, 0);
-        setTimeout(() => this.loop(), nextUpdate - new Date());
+        // 2020-07-20 - Discord limits channel name updates to once per 10 minutes
+        const updateFreq = this.updatesChannel ? 10 * 60 * 1000 : 60 * 1000;
+        setTimeout(() => this.loop(), updateFreq - (Date.now() % updateFreq));
     }
 
     /** Start looping */

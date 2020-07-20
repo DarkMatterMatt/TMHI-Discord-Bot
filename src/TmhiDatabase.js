@@ -745,14 +745,14 @@ class TmhiDatabase {
                 catch (err) {
                     logger.error("Failed loading message", row.messageId);
                 }
-            }
-            if (message == null) {
-                this.deleteClock({
-                    guildId:   row.guildid,
-                    channelId: row.channelid,
-                    messageId: row.messageid,
-                });
-                continue;
+                if (message == null) {
+                    this.deleteClock({
+                        guildId:   row.guildid,
+                        channelId: row.channelid,
+                        messageId: row.messageid,
+                    });
+                    continue;
+                }
             }
 
             const baseData = {
