@@ -1,6 +1,6 @@
 {
   "name": "tmhi-discord-bot",
-  "version": "3.8.3",
+  "version": "3.8.4",
   "description": "TMHI Discord Bot",
   "main": "src/index.js",
   "dependencies": {
@@ -15,10 +15,10 @@
     "winston-daily-rotate-file": "^4.5.0"
   },
   "devDependencies": {
-    "better-docs": "^2.0.1",
-    "eslint": "^7.1.0",
-    "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2"
+    "better-docs": "^2.3.0",
+    "eslint": "^7.5.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
   },
   "scripts": {
     "start": "node src/index.js",
