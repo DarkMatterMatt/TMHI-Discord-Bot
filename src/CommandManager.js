@@ -1,4 +1,5 @@
 // imports
+const logger = require("./logger");
 const commands = require("./commands");
 
 /** Listens for, and acts on, user commands */
@@ -32,7 +33,7 @@ class CommandManager {
             const settings = await this.tmhiDatabase.loadGuildSettings(message.guild);
             if (settings.status !== "success") {
                 // failed to load settings from database
-                console.error("startListening => onMessage, settings", settings.error);
+                logger.error("startListening => onMessage, settings", settings.error);
                 message.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
                 return;
             }
@@ -109,7 +110,7 @@ class CommandManager {
             const settings = await this.tmhiDatabase.loadGuildSettings(member.guild);
             if (settings.status !== "success") {
                 // failed to load settings from database
-                console.error("startListening => onGuildMemberAdd, settings", settings.error);
+                logger.error("startListening => onGuildMemberAdd, settings", settings.error);
                 member.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
                 return;
             }
@@ -125,7 +126,7 @@ class CommandManager {
             // fetch channel to greet in
             const channel = member.guild.channels.resolve(greetingChannel.idValue);
             if (channel == null) {
-                console.error(`Failed fetching greeting channel: ${greetingChannel.value}`);
+                logger.error(`Failed fetching greeting channel: ${greetingChannel.value}`);
                 return;
             }
 

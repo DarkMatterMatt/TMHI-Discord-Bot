@@ -3,6 +3,7 @@ secrets.js
 out/
 
 # Logs
+*-audit.json
 logs
 *.log
 npm-debug.log*

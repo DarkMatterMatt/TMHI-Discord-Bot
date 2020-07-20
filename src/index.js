@@ -1,27 +1,30 @@
 #!/usr/bin/env nodejs
 
-// crash Node on unhandled promise rejections
-process.on("unhandledRejection", up => {
-    console.error(`Time: ${new Date()}`);
-    throw up;
-});
-
 // imports
 const Discord        = require("discord.js");
 
-const secrets        = require("./secrets.js");
-const CommandManager = require("./CommandManager.js");
-const TmhiDatabase   = require("./TmhiDatabase.js");
+const logger         = require("./logger");
+const secrets        = require("./secrets");
+const CommandManager = require("./CommandManager");
+const TmhiDatabase   = require("./TmhiDatabase");
+
+process.on("unhandledRejection", err => {
+    logger.error("unhandledRejection:", err);
+});
+
+process.on("uncaughtException", err => {
+    logger.error("uncaughtException:", err);
+});
 
 // create the discord client
 const client = new Discord.Client();
 
 client.on("ready", async () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+    logger.info(`Logged in as ${client.user.tag}!`);
 
     // create the connection to database
     const tmhiDatabase = new TmhiDatabase(secrets.database);
-    console.log("Connected to database");
+    logger.verbose("Connected to database");
 
     client.guilds.cache.forEach(async (guild) => {
         await tmhiDatabase.syncGuild(guild);
@@ -37,7 +40,7 @@ client.on("ready", async () => {
     }
     else {
         // failed to load clocks from database
-        console.error("Failed loading clocks", clocks.error);
+        logger.error("Failed loading clocks", clocks.error);
     }
 
     // start listening for user commands
@@ -94,7 +97,7 @@ client.on("ready", async () => {
         await tmhiDatabase.syncGuildRoles(newRole.guild);
     });
 
-    console.log("Finished initialization");
+    logger.verbose("Finished initialization");
 });
 
 client.login(secrets.bot_token);

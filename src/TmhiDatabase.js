@@ -2,6 +2,7 @@
 const mysql      = require("mysql2/promise");
 
 const Collection = require("discord.js/src/util/Collection");
+const logger     = require("./logger");
 const TmhiMember = require("./TmhiMember");
 const Permission = require("./Permission");
 const Setting    = require("./Setting");
@@ -55,7 +56,7 @@ class TmhiDatabase {
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
         if (queries.error) {
-            console.error(queries.error);
+            logger.error(queries.error);
             queries.status = "error";
             return queries;
         }
@@ -77,7 +78,7 @@ class TmhiDatabase {
 
         const [query] = await this.storeGuildSettings(settings);
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -104,7 +105,7 @@ class TmhiDatabase {
             ;`);
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -130,7 +131,7 @@ class TmhiDatabase {
             ;`, { guildId: guild.id });
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -168,7 +169,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -197,7 +198,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -222,7 +223,7 @@ class TmhiDatabase {
             ;`, { id: guildMember.id });
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -231,7 +232,7 @@ class TmhiDatabase {
 
         // no user found
         if (rows.length === 0) {
-            console.error(`Failed loading user with id: ${guildMember.id} from the database`);
+            logger.error(`Failed loading user with id: ${guildMember.id} from the database`);
             return {
                 status: "error",
                 error:  `Failed loading user with id: ${guildMember.id} from the database`,
@@ -253,7 +254,7 @@ class TmhiDatabase {
             ;`, [guildMember.guild.id, ...guildMember.roles.cache.map(r => r.id)]);
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -282,7 +283,7 @@ class TmhiDatabase {
             });
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -352,7 +353,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -377,7 +378,7 @@ class TmhiDatabase {
             return query;
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -404,7 +405,7 @@ class TmhiDatabase {
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
         if (queries.error) {
-            console.error(queries.error);
+            logger.error(queries.error);
             queries.status = "error";
             return queries;
         }
@@ -532,7 +533,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -556,7 +557,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -587,7 +588,7 @@ class TmhiDatabase {
         // there was at least one error
         queries.error = queries.find(q => q instanceof Error);
         if (queries.error) {
-            console.error(queries.error);
+            logger.error(queries.error);
             queries.status = "error";
             return queries;
         }
@@ -624,7 +625,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -654,7 +655,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -680,7 +681,7 @@ class TmhiDatabase {
 
         // something went wrong
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             return false;
         }
         return query[0] && query[0].length;
@@ -702,7 +703,7 @@ class TmhiDatabase {
             `);
         }
         catch (error) {
-            console.error(error);
+            logger.error(error);
             return {
                 status: "error",
                 error,
@@ -726,7 +727,7 @@ class TmhiDatabase {
 
             const channel = guild.channels.resolve(row.channelid);
             if (channel == null) {
-                console.error("Failed loading channel", row.channelid);
+                logger.error("Failed loading channel", row.channelid);
                 this.deleteClock({
                     guildId:   row.guildid,
                     channelId: row.channelid,
@@ -742,7 +743,7 @@ class TmhiDatabase {
                     message = await channel.messages.fetch(row.messageid);
                 }
                 catch (err) {
-                    console.error("Failed loading message", row.messageId);
+                    logger.error("Failed loading message", row.messageId);
                 }
             }
             if (message == null) {
@@ -785,7 +786,7 @@ class TmhiDatabase {
                 });
             }
             else {
-                console.error(`Failed loading clock. Guild: ${guild}, Id: ${row.id}`, row);
+                logger.error(`Failed loading clock. Guild: ${guild}, Id: ${row.id}`, row);
                 continue;
             }
 
@@ -822,7 +823,7 @@ class TmhiDatabase {
         }).catch(e => e);
 
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;
@@ -845,7 +846,7 @@ class TmhiDatabase {
         }).catch(e => e);
 
         if (query instanceof Error) {
-            console.error(query);
+            logger.error(query);
             query.status = "error";
             query.error  = query;
             return query;

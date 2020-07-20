@@ -1,3 +1,5 @@
+const logger = require("./logger");
+
 /** The base class of the live Clock/Timer/Stopwatch */
 class ClockBase {
     /**
@@ -27,7 +29,7 @@ class ClockBase {
     /** Generates the display string */
     // eslint-disable-next-line class-methods-use-this
     getFormattedString() {
-        console.warn("Please use Clock/Timer/Stopwatch instead of ClockBase");
+        logger.warn("Please use Clock/Timer/Stopwatch instead of ClockBase");
         return "ClockBase";
     }
 
