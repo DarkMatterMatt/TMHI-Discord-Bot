@@ -214,7 +214,7 @@ async function set({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     const setting = settings.get(settingId);
-    if (settings == null) {
+    if (setting == null) {
         // incorrect setting id
         message.reply("Sorry, I couldn't find that setting id!");
         return;
@@ -721,7 +721,7 @@ async function addTimer({ tmhiDatabase, clocks, message, args, prefix }, inChann
         message: timerMessage,
     });
     let timer = clocks.get(timerId);
-    if (timer !== null) {
+    if (timer != null) {
         timer.stop();
     }
 

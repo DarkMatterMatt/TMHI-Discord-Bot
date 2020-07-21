@@ -762,14 +762,14 @@ class TmhiDatabase {
                 textContent: row.textcontent,
             };
 
-            if (row.utcoffset !== null) {
+            if (row.utcoffset != null) {
                 // clock
                 clock = new Clock({
                     utcOffset:  row.utcoffset / (60 * 60 * 1000),
                     ...baseData,
                 });
             }
-            else if (row.timefinish !== null && row.timerfinishmessage !== null) {
+            else if (row.timefinish != null && row.timerfinishmessage != null) {
                 // timer
                 clock = new Timer({
                     timeFinish:         new Date(row.timefinish),
@@ -777,7 +777,7 @@ class TmhiDatabase {
                     ...baseData,
                 });
             }
-            else if (row.timestart !== null && row.timefinish !== null) {
+            else if (row.timestart != null && row.timefinish != null) {
                 // stopwatch
                 clock = new Stopwatch({
                     timeStart:  new Date(row.timestart),
