@@ -1,6 +1,7 @@
 // imports
 const logger = require("./logger");
 const commands = require("./commands");
+const { stringTemplate } = require("./helpers");
 
 /** Listens for, and acts on, user commands */
 class CommandManager {
@@ -130,7 +131,13 @@ class CommandManager {
                 return;
             }
 
-            channel.send(greetingMessage.value.replace("{{member}}", member.toString()));
+            channel.send(stringTemplate(greetingMessage.value, {
+                id:      member.id,
+                member:  member.toString(),
+                mention: member.toString(),
+                rawtag:  member.user.tag,
+                roles:   member.roles.cache.map(r => r.name).join("|"),
+            }));
         });
     }
 }
