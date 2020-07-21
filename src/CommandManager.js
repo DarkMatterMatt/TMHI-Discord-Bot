@@ -139,6 +139,43 @@ class CommandManager {
                 roles:   member.roles.cache.map(r => r.name).join("|"),
             }));
         });
+
+        /**
+         * User left the server.
+         */
+        this.client.on("guildMemberRemove", async (member) => {
+            // load guild settings
+            const settings = await this.tmhiDatabase.loadGuildSettings(member.guild);
+            if (settings.status !== "success") {
+                // failed to load settings from database
+                logger.error("startListening => onGuildMemberRemove, settings", settings.error);
+                member.reply("Failed loading settings from the database, go bug @DarkMatterMatt");
+                return;
+            }
+
+            const leavingMessage = settings.get("LEAVING_MESSAGE");
+            const leavingChannel = settings.get("LEAVING_CHANNEL");
+
+            if (!leavingChannel || !leavingMessage) {
+                // no leaving message
+                return;
+            }
+
+            // fetch channel to send leaving message in
+            const channel = member.guild.channels.resolve(leavingChannel.idValue);
+            if (channel == null) {
+                logger.error(`Failed fetching leaving message channel: ${leavingChannel.value}`);
+                return;
+            }
+
+            channel.send(stringTemplate(leavingMessage.value, {
+                id:      member.id,
+                member:  member.toString(),
+                mention: member.toString(),
+                rawtag:  member.user.tag,
+                roles:   member.roles.cache.map(r => r.name).join("|"),
+            }));
+        });
     }
 }
 

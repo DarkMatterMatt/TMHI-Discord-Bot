@@ -146,5 +146,7 @@ INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_M
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('BOT_OWNER_GOD_MODE',        'Bot Owner has God Mode',   '0',    'Bot owner has full (admin) privileges');
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_CHANNEL',          'Greeting Channel',         "",     'The channel to greet new members in');
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_MESSAGE',          'Greeting Message',         "",     'The message to greet new members with');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('LEAVING_CHANNEL',           'Leaving Channel',          "",     'The channel to say goodbye to members in');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('LEAVING_MESSAGE',           'Leaving Message',          "",     'The message to say goodbye to members with');
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('INITIATE_ROLE',             'Initiate Role',            "",     'The role to grant to new initiates');
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('INITIATE_MESSAGE',          'Initiate Message',         "",     'The message to greet initiated members with');
