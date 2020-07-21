@@ -240,6 +240,53 @@ addCommand({
 });
 
 /**
+ * View current guild settings
+ * @category Commands
+ * @module viewSettings
+ */
+async function viewSettings({ tmhiDatabase, message, settings }) {
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        logger.error("set, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    if (!author.hasPermission("ADMIN")) {
+        // missing permissions
+        message.reply("You must be an admin to view bot settings");
+        return;
+    }
+
+    const embed = new Discord.MessageEmbed()
+        .setTimestamp()
+        .setFooter(`T-MHI Bot v${process.env.npm_package_version} by @DarkMatterMatt`)
+        .setTitle(`Guild Settings for ${message.guild}`);
+
+    // each setting has field
+    settings.forEach(({ comment, defaultValue, id, name, value }) => {
+        const formattedComment = comment ? `*${comment}*.\n` : "";
+        embed.addField(name, `${formattedComment}${id} = ${value}\ndefault = ${defaultValue}`);
+    });
+
+    // send DM
+    const dmChannel = message.author.dmChannel || await message.author.createDM();
+    dmChannel.send(embed);
+
+    // reply so it doesn't look like the command failed
+    if (!settings.get("DELETE_COMMAND_MESSAGE").enabled) {
+        message.reply("Sent you a DM!");
+    }
+}
+addCommand({
+    name:    "viewSettings",
+    command: viewSettings,
+    syntax:  "{{prefix}}viewSettings",
+});
+addCommandAlias("viewSettings", "settings");
+
+/**
  * Set the command prefix
  * @category Commands
  * @module setCommandPrefix
