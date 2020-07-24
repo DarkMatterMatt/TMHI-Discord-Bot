@@ -131,12 +131,14 @@ class CommandManager {
                 return;
             }
 
+            const roles = member.roles.cache.map(r => r.name).filter(r => r !== "@everyone");
             channel.send(stringTemplate(greetingMessage.value, {
                 id:      member.id,
                 member:  member.toString(),
                 mention: member.toString(),
                 rawtag:  member.user.tag,
-                roles:   member.roles.cache.map(r => r.name).join("|"),
+                roles:   roles.join("|") || "*none*",
+                tag:     member.user.tag,
             }));
         });
 
@@ -168,12 +170,14 @@ class CommandManager {
                 return;
             }
 
+            const roles = member.roles.cache.map(r => r.name).filter(r => r !== "@everyone");
             channel.send(stringTemplate(leavingMessage.value, {
                 id:      member.id,
                 member:  member.toString(),
                 mention: member.toString(),
                 rawtag:  member.user.tag,
-                roles:   member.roles.cache.map(r => r.name).join("|"),
+                roles:   roles.join("|") || "*none*",
+                tag:     member.user.tag,
             }));
         });
     }
