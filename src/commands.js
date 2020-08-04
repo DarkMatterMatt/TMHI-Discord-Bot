@@ -649,19 +649,19 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     const initiateRole = settings.get("INITIATE_ROLE");
     const initiateMessage = settings.get("INITIATE_MESSAGE");
     if (!initiateRole.boolValue && !initiateMessage.boolValue) {
-        message.reply("Please set the INITIATE_ROLE or INITIATE_MESSAGE settings to enable this command");
+        message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
         return;
-    } else {
-        if (initiateRole.enabled) {
-            // give member the role
-            member.roles.add(initiateRole.idValue);
-        }
+    }
 
-        if (initiateMessage.enabled) {
-            // send DM to member
-            const dmChannel = member.dmChannel || await member.createDM();
-            dmChannel.send(initiateMessage.value.replace("{{member}}", member.toString()));
-        }
+    if (initiateRole.enabled) {
+        // give member the role
+        member.roles.add(initiateRole.idValue);
+    }
+
+    if (initiateMessage.enabled) {
+        // send DM to member
+        message.channel.send(initiateMessage.value.replace("{{member}}", member.toString()));
+        return;
     }
 
     message.reply(`Initiated ${member}!`);
@@ -671,7 +671,6 @@ addCommand({
     command: initiate,
     syntax:  "{{prefix}}initiate @.member",
 });
-
 
 /*
  * Adds a member role to new initiate members
@@ -725,13 +724,17 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     // make sure member has the 'INITIATE_ROLE' prior to proceeding
-    if (!member.roles.cache.has(settings.get("INITIATE_ROLE").id)) {
+    // this check *PASSES* if INITIATE_ROLE is not set
+    const initiateRole = settings.get("INITIATE_ROLE");
+    if (initiateRole.enabled && !member.roles.cache.has(initiateRole.idValue)) {
         message.reply(`${member} is not yet initiated, start by initiating them first!`);
         return;
     }
 
     // make sure member has the 'VERIFIED_ROLE' prior to proceeding
-    if (!member.roles.cache.has(settings.get("VERIFIED_ROLE").id)) {
+    // this check *PASSES* if VERIFIED_ROLE is not set
+    const verifiedRole = settings.get("VERIFIED_ROLE");
+    if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
         message.reply(`${member} is not yet verified, we cannot proceed just yet!`);
         return;
     }
@@ -739,38 +742,47 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     const concludedRole = settings.get("CONCLUDED_ROLE");
     const concludedMessage = settings.get("CONCLUDED_MESSAGE");
     if (!concludedRole.enabled || !concludedMessage.enabled) {
-        message.reply("Please set the CONCLUDED_ROLE or CONCLUDED_MESSAGE settings to enable this command");
+        message.reply("Set CONCLUDED_ROLE or CONCLUDED_MESSAGE to enable this command");
         return;
-    } else {
-        // give member the role
-        member.roles.add(concludedRole.idValue);
-
-        // send message to the ticket channel created for this member
-        message.send(concludedMessage.value.replace("{{member}}", member.toString()));
     }
 
-    // Assign them the 'squadless' role, so that they get access to a squadless channel, so a squad leader can be found for them
+    if (concludedRole.enabled) {
+        // give member the role
+        member.roles.add(concludedRole.idValue);
+    }
+
+    if (concludedMessage.enabled) {
+        // send DM to member
+        message.channel.send(concludedMessage.value.replace("{{member}}", member.toString()));
+    }
+
+    // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
     const squadlessRole = settings.get("SQUADLESS_ROLE");
     const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
     const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
     if (!squadlessRole.enabled || !squadlessMessage.enabled || !squadlessChannel.enabled) {
-        message.reply("Please set the SQUADLESS_ROLE or SQUADLESS_MESSAGE or SQUADLESS_CHANNEL settings to enable this command");
+        message.reply("Set all of { SQUADLESS_ROLE, SQUADLESS_MESSAGE, SQUADLESS_CHANNEL } to enable this command");
         return;
-    } else {
-        // give member the role
-        member.roles.add(squadlessRole.idValue);
-
-        // send message to the squadless channel created for this member, asking for
-        // squadleaders with the @LGM(Looking for member) role can be notified about this
-        squadlessChannel.send(squadlessMessage.value.replace("{{member}}", member.toString()));
     }
+    // give member the role
+    member.roles.add(squadlessRole.idValue);
+
+    // fetch channel to send leaving message in
+    const channel = member.guild.channels.resolve(squadlessChannel.idValue);
+    if (channel == null) {
+        logger.error(`Failed fetching leaving message channel: ${squadlessChannel.value}`);
+        return;
+    }
+    // send message to the squadless channel created for this member, asking for
+    // squad-leaders with the @LGM(Looking for member) role can be notified about this
+    channel.send(squadlessMessage.value.replace("{{member}}", member.toString()));
 
     message.reply(`Concluded signing up new member ${member}!`);
 }
 addCommand({
-    name: "concluded",
+    name:    "concluded",
     command: concluded,
-    syntax: "{{prefix}}concluded @.member",
+    syntax:  "{{prefix}}concluded @.member",
 });
 
 /**
