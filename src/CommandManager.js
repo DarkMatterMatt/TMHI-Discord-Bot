@@ -1,7 +1,7 @@
 // imports
 const logger = require("./logger");
 const commands = require("./commands");
-const { stringTemplate } = require("./helpers");
+const { stringTemplateMember } = require("./helpers");
 
 /** Listens for, and acts on, user commands */
 class CommandManager {
@@ -130,16 +130,7 @@ class CommandManager {
                 logger.error(`Failed fetching greeting channel: ${greetingChannel.value}`);
                 return;
             }
-
-            const roles = member.roles.cache.map(r => r.name).filter(r => r !== "@everyone");
-            channel.send(stringTemplate(greetingMessage.value, {
-                id:      member.id,
-                member:  member.toString(),
-                mention: member.toString(),
-                rawtag:  member.user.tag,
-                roles:   roles.join("|") || "*none*",
-                tag:     member.user.tag,
-            }));
+            channel.send(stringTemplateMember(greetingMessage.value, member));
         });
 
         /**
@@ -169,16 +160,7 @@ class CommandManager {
                 logger.error(`Failed fetching leaving message channel: ${leavingChannel.value}`);
                 return;
             }
-
-            const roles = member.roles.cache.map(r => r.name).filter(r => r !== "@everyone");
-            channel.send(stringTemplate(leavingMessage.value, {
-                id:      member.id,
-                member:  member.toString(),
-                mention: member.toString(),
-                rawtag:  member.user.tag,
-                roles:   roles.join("|") || "*none*",
-                tag:     member.user.tag,
-            }));
+            channel.send(stringTemplateMember(leavingMessage.value, member));
         });
     }
 }

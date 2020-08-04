@@ -11,6 +11,7 @@ const Timer = require("./Timer");
 const Stopwatch = require("./Stopwatch");
 const secrets = require("./secrets");
 const logger = require("./logger");
+const { stringTemplateMember } = require("./helpers");
 
 /**
  * Parse a Snowflake-like string into a Snowflake, or null for invalid formats.
@@ -660,7 +661,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     if (initiateMessage.enabled) {
         // send DM to member
-        message.channel.send(initiateMessage.value.replace("{{member}}", member.toString()));
+        message.channel.send(stringTemplateMember(initiateMessage.value, member));
         return;
     }
 
@@ -753,7 +754,7 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
 
     if (concludedMessage.enabled) {
         // send DM to member
-        message.channel.send(concludedMessage.value.replace("{{member}}", member.toString()));
+        message.channel.send(stringTemplateMember(concludedMessage.value, member));
     }
 
     // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
@@ -775,7 +776,7 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     }
     // send message to the squadless channel created for this member, asking for
     // squad-leaders with the @LGM(Looking for member) role can be notified about this
-    channel.send(squadlessMessage.value.replace("{{member}}", member.toString()));
+    channel.send(stringTemplateMember(squadlessMessage.value, member));
 
     message.reply(`Concluded signing up new member ${member}!`);
 }
