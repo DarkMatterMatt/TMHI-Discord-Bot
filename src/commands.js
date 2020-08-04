@@ -598,7 +598,7 @@ addCommand({
 addCommandAlias("createPoll", "poll");
 
 /**
- * Adds a role to new members
+ * Adds an initiate role to new members
  */
 async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
@@ -647,28 +647,130 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     const initiateRole = settings.get("INITIATE_ROLE");
-    if (initiateRole.enabled) {
-        // give member the role
-        member.roles.add(initiateRole.idValue);
-    }
-
     const initiateMessage = settings.get("INITIATE_MESSAGE");
-    if (initiateMessage.enabled) {
-        // send DM to member
-        const dmChannel = member.dmChannel || await member.createDM();
-        dmChannel.send(initiateMessage.value.replace("{{member}}", member.toString()));
-    }
-
     if (!initiateRole.boolValue && !initiateMessage.boolValue) {
         message.reply("Please set the INITIATE_ROLE or INITIATE_MESSAGE settings to enable this command");
         return;
+    } else {
+        if (initiateRole.enabled) {
+            // give member the role
+            member.roles.add(initiateRole.idValue);
+        }
+
+        if (initiateMessage.enabled) {
+            // send DM to member
+            const dmChannel = member.dmChannel || await member.createDM();
+            dmChannel.send(initiateMessage.value.replace("{{member}}", member.toString()));
+        }
     }
+
     message.reply(`Initiated ${member}!`);
 }
 addCommand({
     name:    "initiate",
     command: initiate,
     syntax:  "{{prefix}}initiate @.member",
+});
+
+
+/*
+ * Adds a member role to new initiate members
+ */
+async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
+    if (args.length !== 1) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}concluded @member\``);
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        logger.error("concluded, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // uses the same permission as needed to initaite someone, keep it simple.
+    if (!author.hasPermission("INITIATE")) {
+        message.reply("Sorry, to initiate a user you need the INITIATE permission");
+        return;
+    }
+
+    // load requested tmhiMember
+    const memberIdToFetch = parseSnowflake(args[0]);
+    if (memberIdToFetch == null) {
+        // invalid snowflake
+        message.reply("Invalid user. Please tag them, @user");
+        return;
+    }
+
+    let guildMember;
+    try {
+        guildMember = await message.guild.members.fetch(memberIdToFetch);
+    }
+    catch (err) {
+        // no such user in guild
+        message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
+        return;
+    }
+
+    // grab the member from the list
+    const member = await tmhiDatabase.loadTmhiMember(guildMember);
+    if (member.status !== "success") {
+        // failed to load user from database
+        logger.error("concluded, member", member.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // make sure member has the 'INITIATE_ROLE' prior to proceeding
+    if (!member.roles.cache.has(settings.get("INITIATE_ROLE").id)) {
+        message.reply(`${member} is not yet initiated, start by initiating them first!`);
+        return;
+    }
+
+    // make sure member has the 'VERIFIED_ROLE' prior to proceeding
+    if (!member.roles.cache.has(settings.get("VERIFIED_ROLE").id)) {
+        message.reply(`${member} is not yet verified, we cannot proceed just yet!`);
+        return;
+    }
+
+    const concludedRole = settings.get("CONCLUDED_ROLE");
+    const concludedMessage = settings.get("CONCLUDED_MESSAGE");
+    if (!concludedRole.enabled || !concludedMessage.enabled) {
+        message.reply("Please set the CONCLUDED_ROLE or CONCLUDED_MESSAGE settings to enable this command");
+        return;
+    } else {
+        // give member the role
+        member.roles.add(concludedRole.idValue);
+
+        // send message to the ticket channel created for this member
+        message.send(concludedMessage.value.replace("{{member}}", member.toString()));
+    }
+
+    // Assign them the 'squadless' role, so that they get access to a squadless channel, so a squad leader can be found for them
+    const squadlessRole = settings.get("SQUADLESS_ROLE");
+    const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
+    const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
+    if (!squadlessRole.enabled || !squadlessMessage.enabled || !squadlessChannel.enabled) {
+        message.reply("Please set the SQUADLESS_ROLE or SQUADLESS_MESSAGE or SQUADLESS_CHANNEL settings to enable this command");
+        return;
+    } else {
+        // give member the role
+        member.roles.add(squadlessRole.idValue);
+
+        // send message to the squadless channel created for this member, asking for
+        // squadleaders with the @LGM(Looking for member) role can be notified about this
+        squadlessChannel.send(squadlessMessage.value.replace("{{member}}", member.toString()));
+    }
+
+    message.reply(`Concluded signing up new member ${member}!`);
+}
+addCommand({
+    name: "concluded",
+    command: concluded,
+    syntax: "{{prefix}}concluded @.member",
 });
 
 /**
