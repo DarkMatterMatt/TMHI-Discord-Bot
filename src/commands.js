@@ -608,6 +608,14 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
+    // check that required settings are set before we do any actions
+    const initiateRole = settings.get("INITIATE_ROLE");
+    const initiateMessage = settings.get("INITIATE_MESSAGE");
+    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
+        message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
+        return;
+    }
+
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
@@ -647,13 +655,6 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
-    const initiateRole = settings.get("INITIATE_ROLE");
-    const initiateMessage = settings.get("INITIATE_MESSAGE");
-    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
-        message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
-        return;
-    }
-
     if (initiateRole.enabled) {
         // give member the role
         member.roles.add(initiateRole.idValue);
@@ -680,6 +681,22 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}concluded @member\``);
+        return;
+    }
+
+    // check that required settings are set before we do any actions
+    const squadlessRole = settings.get("SQUADLESS_ROLE");
+    const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
+    const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
+    if (!squadlessRole.enabled || !squadlessMessage.enabled || !squadlessChannel.enabled) {
+        message.reply("Set all of { SQUADLESS_ROLE, SQUADLESS_MESSAGE, SQUADLESS_CHANNEL } to enable this command");
+        return;
+    }
+
+    const concludedRole = settings.get("CONCLUDED_ROLE");
+    const concludedMessage = settings.get("CONCLUDED_MESSAGE");
+    if (!concludedRole.enabled || !concludedMessage.enabled) {
+        message.reply("Set CONCLUDED_ROLE or CONCLUDED_MESSAGE to enable this command");
         return;
     }
 
@@ -740,13 +757,6 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
-    const concludedRole = settings.get("CONCLUDED_ROLE");
-    const concludedMessage = settings.get("CONCLUDED_MESSAGE");
-    if (!concludedRole.enabled || !concludedMessage.enabled) {
-        message.reply("Set CONCLUDED_ROLE or CONCLUDED_MESSAGE to enable this command");
-        return;
-    }
-
     if (concludedRole.enabled) {
         // give member the role
         member.roles.add(concludedRole.idValue);
@@ -758,14 +768,6 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
-    const squadlessRole = settings.get("SQUADLESS_ROLE");
-    const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
-    const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
-    if (!squadlessRole.enabled || !squadlessMessage.enabled || !squadlessChannel.enabled) {
-        message.reply("Set all of { SQUADLESS_ROLE, SQUADLESS_MESSAGE, SQUADLESS_CHANNEL } to enable this command");
-        return;
-    }
-    // give member the role
     member.roles.add(squadlessRole.idValue);
 
     // fetch channel to send leaving message in
