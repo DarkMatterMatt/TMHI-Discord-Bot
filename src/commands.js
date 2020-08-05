@@ -659,7 +659,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     // this check *PASSES* if VERIFIED_ROLE is not set
     const verifiedRole = settings.get("VERIFIED_ROLE");
     if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
-        message.reply(`${member} is not verified! Use \`;force ${member}\` to restart verification `
+        message.reply(`${member} is not verified! Use \`;force @${member.user.tag}\` to restart verification `
                     + "process if it has expired. Member will recieve a DM with instructions.");
         return;
     }
