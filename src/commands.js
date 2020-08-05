@@ -611,7 +611,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     // check that required settings are set before we do any actions
     const initiateRole = settings.get("INITIATE_ROLE");
     const initiateMessage = settings.get("INITIATE_MESSAGE");
-    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
+    if (!initiateRole.boolValue || !initiateMessage.boolValue) {
         message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
         return;
     }
@@ -666,23 +666,26 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     if (initiateRole.enabled) {
         // give member the role
         member.roles.add(initiateRole.idValue);
-        message.reply(`Initiated ${member}!`);
+    }
+
+    message.reply(`Initiated ${member}!`);
+
+    // Get log report and log message
+    const recruitmentLog = settings.get("RECRUITMENT_LOG_CHANNEL");
+    const recruitmentConcludedMessage = settings.get("RECRUIT_INITIATE_MESSAGE");
+    if (!recruitmentLog.enabled || !recruitmentConcludedMessage.enabled) {
+        return;
+    }
+
+    // Get log channel
+    const channel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
+    if (channel == null) {
+        logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
+        return;
     }
 
     // Report log to other channel
-    const recruitmentLog = settings.get("RECRUITMENT_LOG_CHANNEL");
-    if (recruitmentLog.enabled) {
-        const channel = member.guild.channels.resolve(recruitmentLogChannel.idValue);
-        if (channel == null) {
-            logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
-            return;
-        }
-
-        const recruitInitiateMessage = settings.get("RECRUIT_INITIATE_MESSAGE");
-        if (recruitInitiateMessage.enabled) {
-            recruitmentLogChannel.send(stringTemplateMember("{{member}}, {{author}}", member, { author: author.toString() }));
-        }
-    }
+    channel.send(stringTemplateMember("{{member}}, {{author}}", member, { author: author.toString() }));
 }
 addCommand({
     name:    "initiate",
@@ -776,7 +779,6 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     if (concludedRole.enabled) {
         // give member the role
         member.roles.add(concludedRole.idValue);
-        message.reply(`Concluded signing up new member ${member}!`);
     }
 
     if (initiateRole.enabled) {
@@ -786,11 +788,12 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
 
     // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
     member.roles.add(squadlessRole.idValue);
+    message.reply(`Concluded signing up new member ${member}!`);
 
-    // fetch channel to send leaving message in
+    // fetch channel to send squadless message in
     const channel = member.guild.channels.resolve(squadlessChannel.idValue);
     if (channel == null) {
-        logger.error(`Failed fetching leaving message channel: ${squadlessChannel.value}`);
+        logger.error(`Failed fetching squadless channel: ${squadlessChannel.value}`);
         return;
     }
 
@@ -798,20 +801,22 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     // squad-leaders with the @LGM(Looking for member) role can be notified about this
     channel.send(stringTemplateMember(squadlessMessage.value, member));
 
-    // Report log to other channel
+    // Get log report and log message
     const recruitmentLog = settings.get("RECRUITMENT_LOG_CHANNEL");
-    if (recruitmentLog.enabled) {
-        const recruitmentLogChannel = member.guild.channels.resolve(recruitmentLogChannel.idValue);
-        if (recruitmentLogChannel == null) {
-            logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
-            return;
-        }
-
-        const recruitmentConcludedMessage = settings.get("RECRUIT_CONCLUDED_MESSAGE");
-        if (recruitmentConcludedMessage.enabled) {
-            recruitmentLogChannel.send(stringTemplateMember("{{member}}, {{author}}", member, { author: author.toString() }));
-        }
+    const recruitmentConcludedMessage = settings.get("RECRUIT_CONCLUDED_MESSAGE");
+    if (!recruitmentLog.enabled || !recruitmentConcludedMessage.enabled) {
+        return;
     }
+
+    // Get log channel
+    const recruitmentLogChannel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
+    if (recruitmentLogChannel == null) {
+        logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
+        return;
+    }
+
+    // Report log to other channel
+    recruitmentLogChannel.send(stringTemplateMember("{{member}}, {{author}}", member, { author: author.toString() }));
 }
 addCommand({
     name:    "concluded",
