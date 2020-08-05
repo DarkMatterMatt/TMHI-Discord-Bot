@@ -655,6 +655,14 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
+    // make sure member has the 'VERIFIED_ROLE' prior to proceeding
+    // this check *PASSES* if VERIFIED_ROLE is not set
+    const verifiedRole = settings.get("VERIFIED_ROLE");
+    if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
+        message.reply(`${member} is not yet verified, we cannot proceed just yet! Use the command \`$force @${member}\` to re-start verification process if it has expired. Member will recieve a PM instructing them withw hat to do next`);
+        return;
+    }
+
     if (initiateRole.enabled) {
         // give member the role
         member.roles.add(initiateRole.idValue);
@@ -666,6 +674,14 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
+    // Report activity to log
+    const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
+    if (recruitmentLogChannel.enabled) {
+        const channel = member.guild.channels.resolve(recruitmentLogChannel.idValue);
+        if (channel == null) {
+            channel.reply(`${author} Initiated ${member}!`);
+        }
+    }
     message.reply(`Initiated ${member}!`);
 }
 addCommand({
@@ -753,13 +769,18 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     // this check *PASSES* if VERIFIED_ROLE is not set
     const verifiedRole = settings.get("VERIFIED_ROLE");
     if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
-        message.reply(`${member} is not yet verified, we cannot proceed just yet!`);
+        message.reply(`${member} is not yet verified, we cannot proceed just yet! Use the command \`$force @${member}\` to re-start verification process if it has expired. Member will recieve a PM instructing them withw hat to do next`);
         return;
     }
 
     if (concludedRole.enabled) {
         // give member the role
         member.roles.add(concludedRole.idValue);
+    }
+
+    if (initiateRole.enabled) {
+        // remove the intiaite role
+        member.roles.remove(initiateRole.idValue);
     }
 
     if (concludedMessage.enabled) {
@@ -776,10 +797,19 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
         logger.error(`Failed fetching leaving message channel: ${squadlessChannel.value}`);
         return;
     }
+
     // send message to the squadless channel created for this member, asking for
     // squad-leaders with the @LGM(Looking for member) role can be notified about this
     channel.send(stringTemplateMember(squadlessMessage.value, member));
 
+    // Report log to other channel
+    const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
+    if (recruitmentLogChannel.enabled) {
+        const channel = member.guild.channels.resolve(recruitmentLogChannel.idValue);
+        if (channel == null) {
+            channel.reply(`${author} concluded signing up new member ${member}!`);
+        }
+    }
     message.reply(`Concluded signing up new member ${member}!`);
 }
 addCommand({

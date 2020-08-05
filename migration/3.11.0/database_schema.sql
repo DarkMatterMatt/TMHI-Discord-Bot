@@ -4,3 +4,4 @@ INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('SQUADLESS_ROLE',
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('SQUADLESS_MESSAGE',         'Squadless Message',        "",     'The message to post to the squadless channel');
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('SQUADLESS_CHANNEL',         'Squadless Channel',        "",     'The channel to post the squadless message into');
 INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('VERIFIED_ROLE',             'Verified Role',            "",     'The role someone needs to be able to get the member role');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('RECRUITMENT_LOG_CHANNEL',   'Recruitment Log Channel',  "",     'The channel that will log all the actions performed by recruitment officers');
