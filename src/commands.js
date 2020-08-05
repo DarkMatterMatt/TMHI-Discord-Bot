@@ -673,8 +673,8 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     // get log report and log message
     const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
-    const recruitmentConcludedMessage = settings.get("RECRUIT_INITIATE_MESSAGE");
-    if (!recruitmentLogChannel.enabled || !recruitmentConcludedMessage.enabled) {
+    const recruitmentInitiateMessage = settings.get("RECRUITMENT_INITIATE_MESSAGE");
+    if (!recruitmentLogChannel.enabled || !recruitmentInitiateMessage.enabled) {
         return;
     }
 
@@ -686,7 +686,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     // report log to other channel
-    channel.send(stringTemplateMember("initiate | {{author}} | {{member}}", member, { author: author.toString() }));
+    channel.send(stringTemplateMember(recruitmentInitiateMessage.value, member, { author: author.toString() }));
 }
 addCommand({
     name:    "initiate",
@@ -697,10 +697,10 @@ addCommand({
 /*
  * Adds a member role to new initiate members
  */
-async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
+async function conclude({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
-        message.reply(`Invalid syntax. Syntax is: \`${prefix}concluded @member\``);
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}conclude @member\``);
         return;
     }
 
@@ -713,17 +713,17 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
-    const concludedRole = settings.get("CONCLUDED_ROLE");
-    const concludedMessage = settings.get("CONCLUDED_MESSAGE");
-    if (!concludedRole.enabled || !concludedMessage.enabled) {
-        message.reply("Set CONCLUDED_ROLE or CONCLUDED_MESSAGE to enable this command");
+    const concludeRole = settings.get("CONCLUDE_ROLE");
+    const concludeMessage = settings.get("CONCLUDE_MESSAGE");
+    if (!concludeRole.enabled || !concludeMessage.enabled) {
+        message.reply("Set CONCLUDE_ROLE or CONCLUDE_MESSAGE to enable this command");
         return;
     }
 
     const author = await tmhiDatabase.loadTmhiMember(message.member);
     if (author.status !== "success") {
         // failed to load user from database
-        logger.error("concluded, author", author.error);
+        logger.error("conclude, author", author.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -756,7 +756,7 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     const member = await tmhiDatabase.loadTmhiMember(guildMember);
     if (member.status !== "success") {
         // failed to load user from database
-        logger.error("concluded, member", member.error);
+        logger.error("conclude, member", member.error);
         message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
         return;
     }
@@ -778,9 +778,9 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
-    if (concludedRole.enabled) {
+    if (concludeRole.enabled) {
         // give member the role
-        member.roles.add(concludedRole.idValue);
+        member.roles.add(concludeRole.idValue);
     }
 
     if (initiateRole.enabled) {
@@ -808,8 +808,8 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
 
     // get log channel and log message
     const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
-    const recruitmentConcludedMessage = settings.get("RECRUIT_CONCLUDED_MESSAGE");
-    if (!recruitmentLogChannel.enabled || !recruitmentConcludedMessage.enabled) {
+    const recruitmentConcludeMessage = settings.get("RECRUITMENT_CONCLUDE_MESSAGE");
+    if (!recruitmentLogChannel.enabled || !recruitmentConcludeMessage.enabled) {
         return;
     }
 
@@ -821,12 +821,12 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     // report log to other channel
-    logChannel.send(stringTemplateMember("concluded | {{author}} | {{member}}", member, { author: author.toString() }));
+    logChannel.send(stringTemplateMember(recruitmentConcludeMessage.value, member, { author: author.toString() }));
 }
 addCommand({
-    name:    "concluded",
-    command: concluded,
-    syntax:  "{{prefix}}concluded @.member",
+    name:    "conclude",
+    command: conclude,
+    syntax:  "{{prefix}}conclude @.member",
 });
 
 /**
