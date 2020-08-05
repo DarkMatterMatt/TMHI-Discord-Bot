@@ -611,7 +611,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     // check that required settings are set before we do any actions
     const initiateRole = settings.get("INITIATE_ROLE");
     const initiateMessage = settings.get("INITIATE_MESSAGE");
-    if (!initiateRole.boolValue || !initiateMessage.boolValue) {
+    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
         message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
         return;
     }
@@ -659,7 +659,8 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     // this check *PASSES* if VERIFIED_ROLE is not set
     const verifiedRole = settings.get("VERIFIED_ROLE");
     if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
-        message.reply(`${member} is not yet verified, we cannot proceed just yet! Use the command "$force @${member}" to re-start verification process if it has expired. Member will recieve a PM instructing them withw hat to do next`);
+        message.reply(`${member} is not verified! Use \`;force ${member}\` to restart verification `
+                    + "process if it has expired. Member will recieve a DM with instructions.");
         return;
     }
 
@@ -670,22 +671,22 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
 
     message.reply(`Initiated ${member}!`);
 
-    // Get log report and log message
-    const recruitmentLog = settings.get("RECRUITMENT_LOG_CHANNEL");
+    // get log report and log message
+    const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
     const recruitmentConcludedMessage = settings.get("RECRUIT_INITIATE_MESSAGE");
-    if (!recruitmentLog.enabled || !recruitmentConcludedMessage.enabled) {
+    if (!recruitmentLogChannel.enabled || !recruitmentConcludedMessage.enabled) {
         return;
     }
 
-    // Get log channel
+    // get log channel
     const channel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
     if (channel == null) {
         logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
         return;
     }
 
-    // Report log to other channel
-    channel.send(stringTemplateMember("{{member}}, {{author}}", member, { author: author.toString() }));
+    // report log to other channel
+    channel.send(stringTemplateMember("initiate | {{author}} | {{member}}", member, { author: author.toString() }));
 }
 addCommand({
     name:    "initiate",
@@ -772,7 +773,8 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     // this check *PASSES* if VERIFIED_ROLE is not set
     const verifiedRole = settings.get("VERIFIED_ROLE");
     if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
-        message.reply(`${member} is not yet verified, we cannot proceed just yet! Use the command "$force @${member}" to re-start verification process if it has expired. Member will recieve a PM instructing them withw hat to do next`);
+        message.reply(`${member} is not verified! Use \`;force ${member}\` to restart verification `
+                    + "process if it has expired. Member will recieve a DM with instructions.");
         return;
     }
 
@@ -786,9 +788,12 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
         member.roles.remove(initiateRole.idValue);
     }
 
-    // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
-    member.roles.add(squadlessRole.idValue);
-    message.reply(`Concluded signing up new member ${member}!`);
+    if (squadlessRole.enabled) {
+        // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
+        member.roles.add(squadlessRole.idValue);
+    }
+
+    message.reply(`Concluded signing up ${member}!`);
 
     // fetch channel to send squadless message in
     const channel = member.guild.channels.resolve(squadlessChannel.idValue);
@@ -801,22 +806,22 @@ async function concluded({ tmhiDatabase, message, args, settings, prefix }) {
     // squad-leaders with the @LGM(Looking for member) role can be notified about this
     channel.send(stringTemplateMember(squadlessMessage.value, member));
 
-    // Get log report and log message
-    const recruitmentLog = settings.get("RECRUITMENT_LOG_CHANNEL");
+    // get log channel and log message
+    const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
     const recruitmentConcludedMessage = settings.get("RECRUIT_CONCLUDED_MESSAGE");
-    if (!recruitmentLog.enabled || !recruitmentConcludedMessage.enabled) {
+    if (!recruitmentLogChannel.enabled || !recruitmentConcludedMessage.enabled) {
         return;
     }
 
-    // Get log channel
-    const recruitmentLogChannel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
-    if (recruitmentLogChannel == null) {
+    // get log channel
+    const logChannel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
+    if (logChannel == null) {
         logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
         return;
     }
 
-    // Report log to other channel
-    recruitmentLogChannel.send(stringTemplateMember("{{member}}, {{author}}", member, { author: author.toString() }));
+    // report log to other channel
+    logChannel.send(stringTemplateMember("concluded | {{author}} | {{member}}", member, { author: author.toString() }));
 }
 addCommand({
     name:    "concluded",
