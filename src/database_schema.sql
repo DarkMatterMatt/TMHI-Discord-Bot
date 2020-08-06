@@ -141,12 +141,21 @@ CREATE TABLE clocks (
 );
 
 /* Settings */
-INSERT INTO settings (id, name, defaultvalue)          VALUES ('COMMAND_PREFIX',            'Command Prefix',           '!');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE',    'Delete Command Message',   '0',    'Delete command message after executing');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('BOT_OWNER_GOD_MODE',        'Bot Owner has God Mode',   '0',    'Bot owner has full (admin) privileges');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_CHANNEL',          'Greeting Channel',         "",     'The channel to greet new members in');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_MESSAGE',          'Greeting Message',         "",     'The message to greet new members with');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('LEAVING_CHANNEL',           'Leaving Channel',          "",     'The channel to say goodbye to members in');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('LEAVING_MESSAGE',           'Leaving Message',          "",     'The message to say goodbye to members with');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('INITIATE_ROLE',             'Initiate Role',            "",     'The role to grant to new initiates');
-INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('INITIATE_MESSAGE',          'Initiate Message',         "",     'The message to greet initiated members with');
+INSERT INTO settings (id, name, defaultvalue)          VALUES ('COMMAND_PREFIX',                'Command Prefix',               '!');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('DELETE_COMMAND_MESSAGE',        'Delete Command Message',       '0',                                        'Delete command message after executing');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('BOT_OWNER_GOD_MODE',            'Bot Owner has God Mode',       '0',                                        'Bot owner has full (admin) privileges');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_CHANNEL',              'Greeting Channel',             '',                                         'The channel to greet new members in');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('GREETING_MESSAGE',              'Greeting Message',             'Welcome {{member}}',                       'The message to greet new members with');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('LEAVING_CHANNEL',               'Leaving Channel',              '',                                         'The channel to say goodbye to members in');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('LEAVING_MESSAGE',               'Leaving Message',              '{{member}} ({{tag}}) left :cry:',          'The message to say goodbye to members with');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('INITIATE_ROLE',                 'Initiate Role',                '',                                         'The role to grant to new initiates');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('INITIATE_MESSAGE',              'Initiate Message',             'Starting initiation for {{member}}!',      'The message to greet initiate members with');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('CONCLUDE_ROLE',                 'Conclude Role',                '',                                         'The role to grant to new members');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('CONCLUDE_MESSAGE',              'Conclude Message',             'Initiation for {{member}} is complete!',   'The message to greet members with');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('SQUADLESS_ROLE',                'Squadless Role',               '',                                         'The role to grant to new members without a squad');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('SQUADLESS_MESSAGE',             'Squadless Message',            '{{member}} needs a squad!',                'The message to post to the squadless channel');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('SQUADLESS_CHANNEL',             'Squadless Channel',            '',                                         'The channel to post the squadless message into');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('VERIFIED_ROLE',                 'Verified Role',                '',                                         'The role someone needs to be able to get the member role');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('RECRUITMENT_LOG_CHANNEL',       'Recruitment Log Channel',      '',                                         'The channel that will log all the actions performed by recruitment officers');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('RECRUITMENT_INITIATE_MESSAGE',  'Recruitment Initiate Message', 'initiate | {{author}} | {{member}}',       'The initate message log that will be psoted to the recruitment log channel');
+INSERT INTO settings (id, name, defaultvalue, comment) VALUES ('RECRUITMENT_CONCLUDE_MESSAGE',  'Recruitment Conclude Message', 'conclude | {{author}} | {{member}}',       'The conclude message log that will be posted to the recruitment log channel');

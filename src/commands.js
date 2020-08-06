@@ -11,6 +11,7 @@ const Timer = require("./Timer");
 const Stopwatch = require("./Stopwatch");
 const secrets = require("./secrets");
 const logger = require("./logger");
+const { stringTemplateMember } = require("./helpers");
 
 /**
  * Parse a Snowflake-like string into a Snowflake, or null for invalid formats.
@@ -598,12 +599,20 @@ addCommand({
 addCommandAlias("createPoll", "poll");
 
 /**
- * Adds a role to new members
+ * Adds an initiate role to new members
  */
 async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     if (args.length !== 1) {
         // incorrect number of arguments
         message.reply(`Invalid syntax. Syntax is: \`${prefix}initiate @member\``);
+        return;
+    }
+
+    // check that required settings are set before we do any actions
+    const initiateRole = settings.get("INITIATE_ROLE");
+    const initiateMessage = settings.get("INITIATE_MESSAGE");
+    if (!initiateRole.enabled && !initiateMessage.enabled) {
+        message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
         return;
     }
 
@@ -646,29 +655,178 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
-    const initiateRole = settings.get("INITIATE_ROLE");
+    // make sure member has the 'VERIFIED_ROLE' prior to proceeding
+    // this check *PASSES* if VERIFIED_ROLE is not set
+    const verifiedRole = settings.get("VERIFIED_ROLE");
+    if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
+        message.reply(`${member} is not verified! Use \`;force @${member.user.tag}\` to restart verification `
+                    + "process if it has expired. Member will recieve a DM with instructions.");
+        return;
+    }
+
     if (initiateRole.enabled) {
         // give member the role
         member.roles.add(initiateRole.idValue);
     }
 
-    const initiateMessage = settings.get("INITIATE_MESSAGE");
     if (initiateMessage.enabled) {
-        // send DM to member
-        const dmChannel = member.dmChannel || await member.createDM();
-        dmChannel.send(initiateMessage.value.replace("{{member}}", member.toString()));
+        message.reply(initiateMessage.value, member, { author: author.toString() });
     }
 
-    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
-        message.reply("Please set the INITIATE_ROLE or INITIATE_MESSAGE settings to enable this command");
+    // get log report and log message
+    const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
+    const recruitmentInitiateMessage = settings.get("RECRUITMENT_INITIATE_MESSAGE");
+    if (!recruitmentLogChannel.enabled || !recruitmentInitiateMessage.enabled) {
         return;
     }
-    message.reply(`Initiated ${member}!`);
+
+    // get log channel
+    const channel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
+    if (channel == null) {
+        logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
+        return;
+    }
+
+    // report log to other channel
+    channel.send(stringTemplateMember(recruitmentInitiateMessage.value, member, { author: author.toString() }));
 }
 addCommand({
     name:    "initiate",
     command: initiate,
     syntax:  "{{prefix}}initiate @.member",
+});
+
+/*
+ * Adds a member role to new initiate members
+ */
+async function conclude({ tmhiDatabase, message, args, settings, prefix }) {
+    if (args.length !== 1) {
+        // incorrect number of arguments
+        message.reply(`Invalid syntax. Syntax is: \`${prefix}conclude @member\``);
+        return;
+    }
+
+    // check that required settings are set before we do any actions
+    const concludeRole = settings.get("CONCLUDE_ROLE");
+    const concludeMessage = settings.get("CONCLUDE_MESSAGE");
+    if (!concludeRole.enabled && !concludeMessage.enabled) {
+        message.reply("Set CONCLUDE_ROLE or CONCLUDE_MESSAGE to enable this command");
+        return;
+    }
+
+    const author = await tmhiDatabase.loadTmhiMember(message.member);
+    if (author.status !== "success") {
+        // failed to load user from database
+        logger.error("conclude, author", author.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // uses the same permission as needed to initaite someone, keep it simple.
+    if (!author.hasPermission("INITIATE")) {
+        message.reply("Sorry, to initiate a user you need the INITIATE permission");
+        return;
+    }
+
+    // load requested tmhiMember
+    const memberIdToFetch = parseSnowflake(args[0]);
+    if (memberIdToFetch == null) {
+        // invalid snowflake
+        message.reply("Invalid user. Please tag them, @user");
+        return;
+    }
+
+    let guildMember;
+    try {
+        guildMember = await message.guild.members.fetch(memberIdToFetch);
+    }
+    catch (err) {
+        // no such user in guild
+        message.reply("Sorry, I don't think that user is in this server, maybe you mistyped their name?");
+        return;
+    }
+
+    // grab the member from the list
+    const member = await tmhiDatabase.loadTmhiMember(guildMember);
+    if (member.status !== "success") {
+        // failed to load user from database
+        logger.error("conclude, member", member.error);
+        message.reply("Failed loading user from the database, go bug @DarkMatterMatt");
+        return;
+    }
+
+    // make sure member has the 'INITIATE_ROLE' prior to proceeding
+    // this check *PASSES* if INITIATE_ROLE is not set
+    const initiateRole = settings.get("INITIATE_ROLE");
+    if (initiateRole.enabled && !member.roles.cache.has(initiateRole.idValue)) {
+        message.reply(`${member} is not yet initiated, start by initiating them first!`);
+        return;
+    }
+
+    // make sure member has the 'VERIFIED_ROLE' prior to proceeding
+    // this check *PASSES* if VERIFIED_ROLE is not set
+    const verifiedRole = settings.get("VERIFIED_ROLE");
+    if (verifiedRole.enabled && !member.roles.cache.has(verifiedRole.idValue)) {
+        message.reply(`${member} is not verified! Use \`;force ${member}\` to restart verification `
+                    + "process if it has expired. Member will recieve a DM with instructions.");
+        return;
+    }
+
+    if (initiateRole.enabled) {
+        // remove the initiate role
+        member.roles.remove(initiateRole.idValue);
+    }
+
+    if (concludeRole.enabled) {
+        // give member the role
+        member.roles.add(concludeRole.idValue);
+    }
+
+    if (concludeMessage.enabled) {
+        message.reply(stringTemplateMember(concludeMessage.value, member, { author: author.toString() }));
+    }
+
+    // set squadless roles, send message to channel
+    const squadlessRole = settings.get("SQUADLESS_ROLE");
+    const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
+    const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
+    if (squadlessRole.enabled) {
+        // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
+        member.roles.add(squadlessRole.idValue);
+    }
+
+    // fetch channel to send squadless message in
+    if (squadlessChannel.enabled && squadlessMessage.enabled) {
+        const channel = member.guild.channels.resolve(squadlessChannel.idValue);
+        if (channel == null) {
+            logger.error(`Failed fetching squadless channel: ${squadlessChannel.value}`);
+        }
+        // send message to the squadless channel created for this member, asking for
+        // squad-leaders with the @LGM(Looking for member) role can be notified about this
+        channel.send(stringTemplateMember(squadlessMessage.value, member));
+    }
+
+    // get log channel and log message
+    const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
+    const recruitmentConcludeMessage = settings.get("RECRUITMENT_CONCLUDE_MESSAGE");
+    if (!recruitmentLogChannel.enabled || !recruitmentConcludeMessage.enabled) {
+        return;
+    }
+
+    // get log channel
+    const logChannel = author.guild.channels.resolve(recruitmentLogChannel.idValue);
+    if (logChannel == null) {
+        logger.error(`Failed fetching recruitment log channel: ${recruitmentLogChannel.value}`);
+        return;
+    }
+
+    // report log to other channel
+    logChannel.send(stringTemplateMember(recruitmentConcludeMessage.value, member, { author: author.toString() }));
+}
+addCommand({
+    name:    "conclude",
+    command: conclude,
+    syntax:  "{{prefix}}conclude @.member",
 });
 
 /**

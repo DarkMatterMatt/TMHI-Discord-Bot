@@ -11,6 +11,26 @@ function stringTemplate(str, replacements) {
     });
 }
 
+/**
+ * Replaces occurrences of {{attribute}} in str with details from the guild member
+ * @param {string} str The template string, with {{ }} template variables
+ * @param {GuildMember} member The member to substitute values in from
+ * @param {Record<string, string>} replacements Additional substitution strings to override values from member
+ */
+function stringTemplateMember(str, member, replacements = {}) {
+    const roles = member.roles.cache.map(r => r.name).filter(r => r !== "@everyone");
+    return stringTemplate(str, {
+        id:      member.id,
+        member:  member.toString(),
+        mention: member.toString(),
+        rawtag:  member.user.tag,
+        roles:   roles.join("|") || "*none*",
+        tag:     member.user.tag,
+        ...replacements,
+    });
+}
+
 module.exports = {
     stringTemplate,
+    stringTemplateMember,
 };
