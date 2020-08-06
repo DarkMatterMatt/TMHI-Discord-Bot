@@ -611,7 +611,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     // check that required settings are set before we do any actions
     const initiateRole = settings.get("INITIATE_ROLE");
     const initiateMessage = settings.get("INITIATE_MESSAGE");
-    if (!initiateRole.boolValue && !initiateMessage.boolValue) {
+    if (!initiateRole.enabled && !initiateMessage.enabled) {
         message.reply("Set INITIATE_ROLE or INITIATE_MESSAGE to enable this command");
         return;
     }
@@ -669,7 +669,9 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
         member.roles.add(initiateRole.idValue);
     }
 
-    message.reply(`Initiated ${member}!`);
+    if (initiateMessage.enabled) {
+        message.reply(initiateMessage.value, member, { author: author.toString() });
+    }
 
     // get log report and log message
     const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
@@ -705,17 +707,9 @@ async function conclude({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     // check that required settings are set before we do any actions
-    const squadlessRole = settings.get("SQUADLESS_ROLE");
-    const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
-    const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
-    if (!squadlessRole.enabled || !squadlessMessage.enabled || !squadlessChannel.enabled) {
-        message.reply("Set all of { SQUADLESS_ROLE, SQUADLESS_MESSAGE, SQUADLESS_CHANNEL } to enable this command");
-        return;
-    }
-
     const concludeRole = settings.get("CONCLUDE_ROLE");
     const concludeMessage = settings.get("CONCLUDE_MESSAGE");
-    if (!concludeRole.enabled || !concludeMessage.enabled) {
+    if (!concludeRole.enabled && !concludeMessage.enabled) {
         message.reply("Set CONCLUDE_ROLE or CONCLUDE_MESSAGE to enable this command");
         return;
     }
@@ -778,33 +772,39 @@ async function conclude({ tmhiDatabase, message, args, settings, prefix }) {
         return;
     }
 
+    if (initiateRole.enabled) {
+        // remove the initiate role
+        member.roles.remove(initiateRole.idValue);
+    }
+
     if (concludeRole.enabled) {
         // give member the role
         member.roles.add(concludeRole.idValue);
     }
 
-    if (initiateRole.enabled) {
-        // remove the intiaite role
-        member.roles.remove(initiateRole.idValue);
+    if (concludeMessage.enabled) {
+        message.reply(stringTemplateMember(concludeMessage.value, member, { author: author.toString() }));
     }
 
+    // set squadless roles, send message to channel
+    const squadlessRole = settings.get("SQUADLESS_ROLE");
+    const squadlessMessage = settings.get("SQUADLESS_MESSAGE");
+    const squadlessChannel = settings.get("SQUADLESS_CHANNEL");
     if (squadlessRole.enabled) {
         // assign the 'squadless' role, for access to a squadless channel in order to find a squad-leader for them
         member.roles.add(squadlessRole.idValue);
     }
 
-    message.reply(`Concluded signing up ${member}!`);
-
     // fetch channel to send squadless message in
-    const channel = member.guild.channels.resolve(squadlessChannel.idValue);
-    if (channel == null) {
-        logger.error(`Failed fetching squadless channel: ${squadlessChannel.value}`);
-        return;
+    if (squadlessChannel.enabled && squadlessMessage.enabled) {
+        const channel = member.guild.channels.resolve(squadlessChannel.idValue);
+        if (channel == null) {
+            logger.error(`Failed fetching squadless channel: ${squadlessChannel.value}`);
+        }
+        // send message to the squadless channel created for this member, asking for
+        // squad-leaders with the @LGM(Looking for member) role can be notified about this
+        channel.send(stringTemplateMember(squadlessMessage.value, member));
     }
-
-    // send message to the squadless channel created for this member, asking for
-    // squad-leaders with the @LGM(Looking for member) role can be notified about this
-    channel.send(stringTemplateMember(squadlessMessage.value, member));
 
     // get log channel and log message
     const recruitmentLogChannel = settings.get("RECRUITMENT_LOG_CHANNEL");
