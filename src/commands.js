@@ -670,7 +670,7 @@ async function initiate({ tmhiDatabase, message, args, settings, prefix }) {
     }
 
     if (initiateMessage.enabled) {
-        message.reply(initiateMessage.value, member, { author: author.toString() });
+        message.reply(stringTemplateMember(initiateMessage.value, member, { author: author.toString() }));
     }
 
     // get log report and log message
