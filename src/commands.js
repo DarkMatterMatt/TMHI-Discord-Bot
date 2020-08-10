@@ -22,7 +22,7 @@ function parseSnowflake(str) {
 
     // snowflake is between 17 and 19 characters long
     // eslint-disable-next-line yoda
-    if (17 < s.length && s.length < 19) {
+    if (17 <= s.length && s.length <= 19) {
         return s;
     }
     return null;
